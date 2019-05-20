@@ -45,5 +45,5 @@ def plot_transition_probabilities(world, ax, **kwargs):
     ax.set_xlim(-0.5, world.size - 0.5)
     ax.set_ylim(-0.5, world.size - 0.5)
 
-    ax.tripcolor(x, y, t, facecolors=v, **kwargs)
+    ax.tripcolor(x, y, t, facecolors=v, vmin=0.0, vmax=1.0, **kwargs)
     ax.triplot(x, y, t, color='red', linewidth=0.5)
