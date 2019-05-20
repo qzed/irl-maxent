@@ -3,6 +3,13 @@ from itertools import product
 
 
 class GridWorld:
+    """
+    Basic deterministic grid world MDP.
+
+    Edges act as barriers, i.e. if an agent takes an action that would cross
+    an edge, the state will not change.
+    """
+
     def __init__(self, size):
         self.size = size
 
@@ -49,9 +56,17 @@ class GridWorld:
         return 0.0
 
 
-class WindyGridWorld(GridWorld):
-    def __init__(self, size, wind):
-        self.wind = wind
+class IcyGridWorld(GridWorld):
+    """
+    Grid world MDP similar to Frozen Lake, just without the holes in the ice.
+
+    In this worlds, agents will slip with a specified probability, causing
+    the agent to end up in a random neighboring state instead of the one
+    implied by the chosen action.
+    """
+
+    def __init__(self, size, p_slip):
+        self.p_slip = p_slip
 
         super().__init__(size)
 
