@@ -1,0 +1,3 @@
+{
+    "python.linting.pep8Args": ["--max-line-length=100"]
+}
