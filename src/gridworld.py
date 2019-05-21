@@ -108,3 +108,21 @@ class IcyGridWorld(GridWorld):
 
         # otherwise this transition is impossible
         return 0.0
+
+
+def generate_trajectory(world, policy, start, final):
+    state = start
+
+    trajectory = []
+    while state not in final:
+        action = policy(state)
+
+        next_s = range(world.n_states)
+        next_p = world.p_transition[state, :, action]
+
+        next_state = np.random.choice(next_s, p=next_p)
+
+        trajectory += [(state, action, next_state)]
+        state = next_state
+
+    return trajectory
