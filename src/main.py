@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    world = gridworld.GridWorld(5)
+    world = gridworld.IcyGridWorld(5)
 
     ax = plt.figure().add_subplot(111)
     plotting.plot_transition_probabilities(world, ax, cmap='gray')

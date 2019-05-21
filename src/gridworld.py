@@ -53,6 +53,7 @@ class GridWorld:
             if not 0 <= fx + ax < self.size or not 0 <= fy + ay < self.size:
                 return 1.0
 
+        # otherwise this transition is impossible
         return 0.0
 
 
@@ -65,7 +66,7 @@ class IcyGridWorld(GridWorld):
     implied by the chosen action.
     """
 
-    def __init__(self, size, p_slip):
+    def __init__(self, size, p_slip=0.2):
         self.p_slip = p_slip
 
         super().__init__(size)
@@ -75,6 +76,35 @@ class IcyGridWorld(GridWorld):
         tx, ty = self.state_index_to_point(s_to)
         ax, ay = self.actions[a]
 
-        # TODO
+        # intended transition defined by action
+        if fx + ax == tx and fy + ay == ty:
+            return 1.0 - self.p_slip + self.p_slip / self.n_actions
 
+        # we can slip to all neighboring states
+        if abs(fx - tx) + abs(fy - ty) == 1:
+            return self.p_slip / self.n_actions
+
+        # we can stay at the same state if we would move over an edge
+        if fx == tx and fy == ty:
+            # intended move over an edge
+            if not 0 <= fx + ax < self.size or not 0 <= fy + ay < self.size:
+                # double slip chance at corners
+                if not 0 < fx < self.size - 1 and not 0 < fy < self.size - 1:
+                    return 1.0 - self.p_slip + 2.0 * self.p_slip / self.n_actions
+
+                # regular probability at normal edges
+                return 1.0 - self.p_slip + self.p_slip / self.n_actions
+
+            # double slip chance at corners
+            if not 0 < fx < self.size - 1 and not 0 < fy < self.size - 1:
+                return 2.0 * self.p_slip / self.n_actions
+
+            # single slip chance at edge
+            if not 0 < fx < self.size - 1 or not 0 < fy < self.size - 1:
+                return self.p_slip / self.n_actions
+
+            # otherwise we cannot stay at the same state
+            return 0.0
+
+        # otherwise this transition is impossible
         return 0.0
