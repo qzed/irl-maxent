@@ -24,8 +24,8 @@ def main():
 
     reward = np.zeros(world.n_states)
     reward[-1] = 1.0
-    value = gridworld.value_iteration(world.p_transition, reward, 0.8)
-    policy = gridworld.optimal_policy(world, reward, 0.8)
+    value = gridworld.stochastic_value_iteration(world.p_transition, reward, 0.8)
+    policy = gridworld.optimal_policy_from_value(world, value)
 
     ax = plt.figure().add_subplot(111)
     plotting.plot_state_values(world, value, ax, **style)
