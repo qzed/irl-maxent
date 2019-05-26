@@ -30,6 +30,11 @@ class GridWorld:
         s = (max(0, min(self.size - 1, state[0])), max(0, min(self.size - 1, state[1])))
         return self.state_point_to_index(s)
 
+    def state_index_transition(self, s, a):
+        s = self.state_index_to_point(s)
+        s = s[0] + self.actions[a][0], s[1] + self.actions[a][1]
+        return self.state_point_to_index_clipped(s)
+
     def _transition_prob_table(self):
         table = np.zeros(shape=(self.n_states, self.n_states, self.n_actions))
 
@@ -154,3 +159,17 @@ def value_iteration(p, reward, discount, eps=1e-3):
         delta = np.max(np.abs(v_old - v))
 
     return v
+
+
+def optimal_policy_from_value(world, value):
+    policy = [
+        np.argmax([value[world.state_index_transition(s, a)] for a in range(world.n_actions)])
+        for s in range(world.n_states)
+    ]
+
+    return policy
+
+
+def optimal_policy(world, reward, discount, eps=1e-3):
+    value = value_iteration(world.p_transition, reward, discount, eps)
+    return optimal_policy_from_value(world, value)

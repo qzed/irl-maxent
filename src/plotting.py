@@ -56,5 +56,14 @@ def plot_state_values(world, values, ax, border, **kwargs):
 
     if border is not None:
         for i in range(0, world.size + 1):
-            plt.plot([i - 0.5, i - 0.5], [-0.5, world.size - 0.5], **border, label=None)
-            plt.plot([-0.5, world.size - 0.5], [i - 0.5, i - 0.5], **border, label=None)
+            ax.plot([i - 0.5, i - 0.5], [-0.5, world.size - 0.5], **border, label=None)
+            ax.plot([-0.5, world.size - 0.5], [i - 0.5, i - 0.5], **border, label=None)
+
+
+def plot_deterministic_policy(world, policy, ax, **kwargs):
+    arrow_direction = [(0.33, 0), (-0.33, 0), (0, 0.33), (0, -0.33)]
+
+    for state in range(world.n_states):
+        cx, cy = world.state_index_to_point(state)
+        dx, dy = arrow_direction[policy[state]]
+        ax.arrow(cx - 0.5 * dx, cy - 0.5 * dy, dx, dy, head_width=0.1, **kwargs)
