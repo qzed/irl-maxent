@@ -108,3 +108,11 @@ def plot_stochastic_policy(world, policy, ax, border=None, **kwargs):
 
     if border is not None:
         ax.triplot(x, y, t, **border)
+
+
+def plot_trajectory(world, trajectory, ax, **kwargs):
+    xy = [world.state_index_to_point(s) for s, _, _ in trajectory]
+    xy += [world.state_index_to_point(trajectory[-1][2])]
+    x, y = zip(*xy)
+
+    ax.plot(x, y, **kwargs)

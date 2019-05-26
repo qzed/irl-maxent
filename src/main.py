@@ -33,10 +33,12 @@ def main():
 
     ax = plt.figure().add_subplot(111)
     plotting.plot_stochastic_policy(world, policy, ax, **style)
-    plt.show()
 
     for _ in range(5):
-        print(gw.generate_trajectory(world, gw.stochastic_policy_adapter(policy), 0, [24]))
+        trajectory = gw.generate_trajectory(world, gw.stochastic_policy_adapter(policy), 0, [24])
+        plotting.plot_trajectory(world, trajectory, ax, color='yellow')
+
+    plt.show()
 
 
 if __name__ == '__main__':
