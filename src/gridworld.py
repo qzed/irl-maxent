@@ -214,3 +214,7 @@ def stochastic_policy_from_value(world, value, w=_identity):
     ])
 
     return policy / np.sum(policy, axis=1)[:, None]
+
+
+def stochastic_policy_adapter(policy):
+    return lambda state: np.random.choice([*range(policy.shape[1])], p=policy[state, :])
