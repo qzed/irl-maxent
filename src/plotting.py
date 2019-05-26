@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
 
-def plot_transition_probabilities(world, ax, **kwargs):
+def plot_transition_probabilities(world, ax, border=None, **kwargs):
     xy = [(x - 0.5, y - 0.5) for y, x in product(range(world.size + 1), range(world.size + 1))]
     xy += [(x, y) for y, x in product(range(world.size), range(world.size))]
 
@@ -46,4 +46,15 @@ def plot_transition_probabilities(world, ax, **kwargs):
     ax.set_ylim(-0.5, world.size - 0.5)
 
     ax.tripcolor(x, y, t, facecolors=v, vmin=0.0, vmax=1.0, **kwargs)
-    ax.triplot(x, y, t, color='red', linewidth=0.5)
+
+    if border is not None:
+        ax.triplot(x, y, t, **border)
+
+
+def plot_state_values(world, values, ax, border, **kwargs):
+    ax.imshow(np.reshape(values, (world.size, world.size)), origin='lower', **kwargs)
+
+    if border is not None:
+        for i in range(0, world.size + 1):
+            plt.plot([i - 0.5, i - 0.5], [-0.5, world.size - 0.5], **border, label=None)
+            plt.plot([-0.5, world.size - 0.5], [i - 0.5, i - 0.5], **border, label=None)
