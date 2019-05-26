@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
 
-def plot_transition_probabilities(world, ax, border=None, **kwargs):
+def plot_transition_probabilities(ax, world, border=None, **kwargs):
     xy = [(x - 0.5, y - 0.5) for y, x in product(range(world.size + 1), range(world.size + 1))]
     xy += [(x, y) for y, x in product(range(world.size), range(world.size))]
 
@@ -51,7 +51,7 @@ def plot_transition_probabilities(world, ax, border=None, **kwargs):
         ax.triplot(x, y, t, **border)
 
 
-def plot_state_values(world, values, ax, border, **kwargs):
+def plot_state_values(ax, world, values, border, **kwargs):
     ax.imshow(np.reshape(values, (world.size, world.size)), origin='lower', **kwargs)
 
     if border is not None:
@@ -60,7 +60,7 @@ def plot_state_values(world, values, ax, border, **kwargs):
             ax.plot([-0.5, world.size - 0.5], [i - 0.5, i - 0.5], **border, label=None)
 
 
-def plot_deterministic_policy(world, policy, ax, **kwargs):
+def plot_deterministic_policy(ax, world, policy, **kwargs):
     arrow_direction = [(0.33, 0), (-0.33, 0), (0, 0.33), (0, -0.33)]
 
     for state in range(world.n_states):
@@ -69,7 +69,7 @@ def plot_deterministic_policy(world, policy, ax, **kwargs):
         ax.arrow(cx - 0.5 * dx, cy - 0.5 * dy, dx, dy, head_width=0.1, **kwargs)
 
 
-def plot_stochastic_policy(world, policy, ax, border=None, **kwargs):
+def plot_stochastic_policy(ax, world, policy, border=None, **kwargs):
     xy = [(x - 0.5, y - 0.5) for y, x in product(range(world.size + 1), range(world.size + 1))]
     xy += [(x, y) for y, x in product(range(world.size), range(world.size))]
 
@@ -110,7 +110,7 @@ def plot_stochastic_policy(world, policy, ax, border=None, **kwargs):
         ax.triplot(x, y, t, **border)
 
 
-def plot_trajectory(world, trajectory, ax, **kwargs):
+def plot_trajectory(ax, world, trajectory, **kwargs):
     xy = [world.state_index_to_point(s) for s, _, _ in trajectory]
     xy += [world.state_index_to_point(trajectory[-1][2])]
     x, y = zip(*xy)

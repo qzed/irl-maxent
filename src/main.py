@@ -16,7 +16,7 @@ def main():
     world = gw.GridWorld(5)
 
     ax = plt.figure().add_subplot(111)
-    plotting.plot_transition_probabilities(world, ax, **style)
+    plotting.plot_transition_probabilities(ax, world, **style)
     plt.show()
 
     reward = np.zeros(world.n_states)
@@ -25,18 +25,18 @@ def main():
     policy = gw.optimal_policy_from_value(world, value)
 
     ax = plt.figure().add_subplot(111)
-    plotting.plot_state_values(world, value, ax, **style)
-    plotting.plot_deterministic_policy(world, policy, ax)
+    plotting.plot_state_values(ax, world, value, **style)
+    plotting.plot_deterministic_policy(ax, world, policy)
     plt.show()
 
     policy = gw.stochastic_policy_from_value(world, value, w=lambda x: x**2)
 
     ax = plt.figure().add_subplot(111)
-    plotting.plot_stochastic_policy(world, policy, ax, **style)
+    plotting.plot_stochastic_policy(ax, world, policy, **style)
 
     for _ in range(5):
         trajectory = gw.generate_trajectory(world, gw.stochastic_policy_adapter(policy), 0, [24])
-        plotting.plot_trajectory(world, trajectory, ax, color='yellow')
+        plotting.plot_trajectory(ax, world, trajectory, color='yellow')
 
     plt.show()
 
