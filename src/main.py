@@ -30,7 +30,12 @@ def main():
     ax = plt.figure().add_subplot(111)
     plotting.plot_state_values(world, value, ax, **style)
     plotting.plot_deterministic_policy(world, policy, ax)
+    plt.show()
 
+    policy = gridworld.stochastic_policy_from_value(world, value, w=lambda x: x**2)
+
+    ax = plt.figure().add_subplot(111)
+    plotting.plot_stochastic_policy(world, policy, ax, **style)
     plt.show()
 
 

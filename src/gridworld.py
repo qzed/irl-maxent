@@ -189,11 +189,15 @@ def stochastic_value_iteration(p, reward, discount, eps=1e-3):
     return v
 
 
+def _identity(x):
+    return x
+
+
 def optimal_policy_from_value(world, value):
-    policy = [
+    policy = np.array([
         np.argmax([value[world.state_index_transition(s, a)] for a in range(world.n_actions)])
         for s in range(world.n_states)
-    ]
+    ])
 
     return policy
 
@@ -201,3 +205,12 @@ def optimal_policy_from_value(world, value):
 def optimal_policy(world, reward, discount, eps=1e-3):
     value = value_iteration(world.p_transition, reward, discount, eps)
     return optimal_policy_from_value(world, value)
+
+
+def stochastic_policy_from_value(world, value, w=_identity):
+    policy = np.array([
+        np.array([w(value[world.state_index_transition(s, a)]) for a in range(world.n_actions)])
+        for s in range(world.n_states)
+    ])
+
+    return policy / np.sum(policy, axis=1)[:, None]
