@@ -111,8 +111,7 @@ def plot_stochastic_policy(ax, world, policy, border=None, **kwargs):
 
 
 def plot_trajectory(ax, world, trajectory, **kwargs):
-    xy = [world.state_index_to_point(s) for s, _, _ in trajectory]
-    xy += [world.state_index_to_point(trajectory[-1][2])]
+    xy = [world.state_index_to_point(s) for s in trajectory.states()]
     x, y = zip(*xy)
 
     ax.plot(x, y, **kwargs)

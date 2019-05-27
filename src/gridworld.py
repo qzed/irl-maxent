@@ -1,5 +1,5 @@
 import numpy as np
-from itertools import product
+from itertools import product, chain
 
 
 class GridWorld:
@@ -143,6 +143,17 @@ def coordinate_features(world):
     return features
 
 
+class Trajectory:
+    def __init__(self, transitions):
+        self._t = transitions
+
+    def transitions(self):
+        return self._t
+
+    def states(self):
+        return map(lambda x: x[0], chain(self._t, [(self._t[-1][2], 0, 0)]))
+
+
 def generate_trajectory(world, policy, start, final):
     state = start
 
@@ -158,7 +169,7 @@ def generate_trajectory(world, policy, start, final):
         trajectory += [(state, action, next_state)]
         state = next_state
 
-    return trajectory
+    return Trajectory(trajectory)
 
 
 def generate_trajectories(n, world, policy, start, final):
