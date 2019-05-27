@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import product
 
 
 def feature_expectation_from_trajectories(features, trajectories):
@@ -35,3 +36,27 @@ def local_action_probabilities(p_transition, terminal, reward):
 
     # compute local action probabilities
     return za / zs[:, None]
+
+
+def expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps=1e-5):
+    n_states, _, n_actions = p_transition.shape
+
+    # set-up transition matrices for each action
+    p_transition = [np.array(p_transition[:, :, a]) for a in range(n_actions)]
+
+    # 'fix' our policy to allow for convergence
+    # we will _never_ leave any terminal state
+    p_action = np.copy(p_action)
+    p_action[terminal, :] = 0.0
+
+    # actual forward-computation of state expectations
+    d = np.zeros(n_states)
+
+    delta = np.inf
+    while delta > eps:
+        d_ = [np.dot(p_transition[a].T, np.multiply(p_action[:, a], d)) for a in range(n_actions)]
+        d_ = p_initial + np.array(d_).sum(axis=0)
+
+        delta, d = np.max(np.abs(d_ - d)), d_
+
+    return d

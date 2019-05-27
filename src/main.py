@@ -21,13 +21,22 @@ def main():
 
     reward = np.zeros(world.n_states)
     reward[-1] = 1.0
+
+    initial = np.zeros(world.n_states)
+    initial[0] = 1.0
+
     value = gw.stochastic_value_iteration(world.p_transition, reward, 0.8)
     policy = gw.optimal_policy_from_value(world, value)
 
     pla = maxent.local_action_probabilities(world.p_transition, [24], reward)
+    svf = maxent.expected_svf_from_policy(world.p_transition, initial, [24], pla)
 
     ax = plt.figure().add_subplot(111)
     plotting.plot_stochastic_policy(ax, world, pla, **style)
+    plt.show()
+
+    ax = plt.figure().add_subplot(111)
+    plotting.plot_state_values(ax, world, svf, **style)
     plt.show()
 
     ax = plt.figure().add_subplot(111)
