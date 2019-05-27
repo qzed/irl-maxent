@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 
 def main():
     style = {
-        'cmap': 'gray',
         'border': {'color': 'red', 'linewidth': 0.5},
     }
 
@@ -24,6 +23,12 @@ def main():
     reward[-1] = 1.0
     value = gw.stochastic_value_iteration(world.p_transition, reward, 0.8)
     policy = gw.optimal_policy_from_value(world, value)
+
+    pla = maxent.local_action_probabilities(world.p_transition, [24], reward)
+
+    ax = plt.figure().add_subplot(111)
+    plotting.plot_stochastic_policy(ax, world, pla, **style)
+    plt.show()
 
     ax = plt.figure().add_subplot(111)
     plotting.plot_state_values(ax, world, value, **style)
