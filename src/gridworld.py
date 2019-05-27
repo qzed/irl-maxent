@@ -161,6 +161,10 @@ def generate_trajectory(world, policy, start, final):
     return trajectory
 
 
+def generate_trajectories(n, world, policy, start, final):
+    return (generate_trajectory(world, policy, start, final) for _ in range(n))
+
+
 def value_iteration(p, reward, discount, eps=1e-3):
     n_states, _, n_actions = p.shape
     v = np.zeros(n_states)
