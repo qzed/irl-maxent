@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import gridworld as gw
+import maxent
 import plotting
 
 import numpy as np
@@ -34,10 +35,17 @@ def main():
     ax = plt.figure().add_subplot(111)
     plotting.plot_stochastic_policy(ax, world, policy, **style)
 
-    for _ in range(5):
-        trajectory = gw.generate_trajectory(world, gw.stochastic_policy_adapter(policy), 0, [24])
-        plotting.plot_trajectory(ax, world, trajectory, color='yellow')
+    ts = [*gw.generate_trajectories(200, world, gw.stochastic_policy_adapter(policy), 0, [24])]
+    for t in ts:
+        plotting.plot_trajectory(ax, world, t, color='yellow', alpha=0.025)
 
+    plt.show()
+
+    features = gw.state_features(world)
+    f_expect = maxent.feature_expectation_from_trajectories(features, ts)
+
+    ax = plt.figure().add_subplot(111)
+    plotting.plot_state_values(ax, world, f_expect, **style)
     plt.show()
 
 
