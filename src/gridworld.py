@@ -115,6 +115,34 @@ class IcyGridWorld(GridWorld):
         return 0.0
 
 
+def state_features(world):
+    """
+    Return the feature matrix assigning each state with an individual
+    feature (i.e. an identity matrix of size n_states * n_states).
+
+    Rows represent individual states, columns the feature entries.
+    """
+    return np.identity(world.n_states)
+
+
+def coordinate_features(world):
+    """
+    Symmetric features assigning each state a vector where the respective
+    coordinate indices are nonzero (i.e. a matrix of size n_states *
+    world_size).
+
+    Rows represent individual states, columns the feature entries.
+    """
+    features = np.zeros((world.n_states, world.size))
+
+    for s in range(world.n_states):
+        x, y = world.state_index_to_point(s)
+        features[s, x] += 1
+        features[s, y] += 1
+
+    return features
+
+
 def generate_trajectory(world, policy, start, final):
     state = start
 
