@@ -14,6 +14,15 @@ def feature_expectation_from_trajectories(features, trajectories):
     return fe / len(trajectories)
 
 
+def initial_probabilities_from_trajectories(n_states, trajectories):
+    p = np.zeros(n_states)
+
+    for t in trajectories:
+        p[t.transitions()[0][0]] += 1.0
+
+    return p / len(trajectories)
+
+
 def local_action_probabilities(p_transition, terminal, reward):
     n_states, _, n_actions = p_transition.shape
 

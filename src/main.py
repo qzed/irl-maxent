@@ -57,6 +57,7 @@ def main():
 
     features = gw.state_features(world)
     f_expect = maxent.feature_expectation_from_trajectories(features, ts)
+    p_initial = maxent.initial_probabilities_from_trajectories(world.n_states, ts)
 
     ax = plt.figure().add_subplot(111)
     plotting.plot_state_values(ax, world, f_expect, **style)
