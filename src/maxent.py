@@ -100,5 +100,8 @@ def irl(p_transition, features, terminal, trajectories, n_epochs, learning_rate,
         theta = theta * np.exp(alpha * grad * features.T.dot(e_svf))
         theta = theta / theta.sum()
 
+        # TODO: compare exp. gradient descent with the one from bziebart's thesis:
+        # theta = theta * np.exp(learning_rate/(k+1) * grad)
+
     # re-compute per-state reward and return
     return features.dot(theta)
