@@ -69,3 +69,8 @@ def expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps=1e
         delta, d = np.max(np.abs(d_ - d)), d_
 
     return d
+
+
+def compute_expected_svf(p_transition, p_initial, terminal, reward, eps=1e-5):
+    p_action = local_action_probabilities(p_transition, terminal, reward)
+    return expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps)
