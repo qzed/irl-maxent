@@ -13,7 +13,7 @@ def main():
         'border': {'color': 'red', 'linewidth': 0.5},
     }
 
-    world = gw.GridWorld(5)
+    world = gw.IcyGridWorld(5)
 
     ax = plt.figure().add_subplot(111)
     plotting.plot_transition_probabilities(ax, world, **style)

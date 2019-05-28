@@ -85,15 +85,20 @@ def irl(p_transition, features, terminal, trajectories, n_epochs, learning_rate,
     p_initial = initial_probabilities_from_trajectories(n_states, trajectories)
 
     # basic gradient descent
-    theta = 0.1 * np.random.uniform(size=(n_features,))     # TODO: initialization-type as parameter
-    for _ in range(n_epochs):                               # TODO: do until convergence?
+    theta = np.ones(n_features) / n_features
+    # theta = 0.1 * np.random.uniform(size=(n_features,))   # TODO: initialization-type as parameter
+    for k in range(n_epochs):                               # TODO: do until convergence?
         reward = features.dot(theta)
 
         e_svf = compute_expected_svf(p_transition, p_initial, terminal, reward, eps_esvf)
         grad = e_features - features.T.dot(e_svf)
 
-        theta += learning_rate * grad
-        learning_rate = learning_rate ** 2                  # TODO: sgd-algorithm as parameter?
+        # alpha = learning_rate
+        alpha = learning_rate / (k+1)**2                    # TODO: sgd-algorithm as parameter?
+        # alpha = learning_rate * np.exp(-2 * k)            # TODO: sgd-algorithm as parameter?
+        # theta += alpha * grad
+        theta = theta * np.exp(alpha * grad * features.T.dot(e_svf))
+        theta = theta / theta.sum()
 
     # re-compute per-state reward and return
     return features.dot(theta)
