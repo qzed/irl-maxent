@@ -41,13 +41,13 @@ def local_action_probabilities(p_transition, terminal, reward):
 def expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps=1e-5):
     n_states, _, n_actions = p_transition.shape
 
+    # 'fix' our transition probabilities to allow for convergence
+    # we will _never_ leave any terminal state
+    p_transition = np.copy(p_transition)
+    p_transition[terminal, :, :] = 0.0
+
     # set-up transition matrices for each action
     p_transition = [np.array(p_transition[:, :, a]) for a in range(n_actions)]
-
-    # 'fix' our policy to allow for convergence
-    # we will _never_ leave any terminal state
-    p_action = np.copy(p_action)
-    p_action[terminal, :] = 0.0
 
     # actual forward-computation of state expectations
     d = np.zeros(n_states)
