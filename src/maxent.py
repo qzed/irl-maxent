@@ -40,8 +40,8 @@ def local_action_probabilities(p_transition, terminal, reward):
     # guarantee propagation from any state to any other state and back in an
     # arbitrary MDP defined by p_transition.
     for _ in range(2 * n_states):
-        za = np.array([np.multiply(er, np.dot(p[a], zs)) for a in range(n_actions)]).T
-        zs = np.sum(za, axis=1)
+        za = np.array([er * p[a].dot(zs) for a in range(n_actions)]).T
+        zs = za.sum(axis=1)
 
     # compute local action probabilities
     return za / zs[:, None]
@@ -63,7 +63,7 @@ def expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps=1e
 
     delta = np.inf
     while delta > eps:
-        d_ = [np.dot(p_transition[a].T, np.multiply(p_action[:, a], d)) for a in range(n_actions)]
+        d_ = [p_transition[a].T.dot(p_action[:, a] * d) for a in range(n_actions)]
         d_ = p_initial + np.array(d_).sum(axis=0)
 
         delta, d = np.max(np.abs(d_ - d)), d_
