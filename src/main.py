@@ -25,7 +25,7 @@ def main():
     initial = np.zeros(world.n_states)
     initial[0] = 1.0
 
-    value = gw.stochastic_value_iteration(world.p_transition, reward, 0.8)
+    value = gw.value_iteration(world.p_transition, reward, 0.8)
     policy = gw.optimal_policy_from_value(world, value)
 
     pla = maxent.local_action_probabilities(world.p_transition, [24], reward)
@@ -61,6 +61,16 @@ def main():
 
     ax = plt.figure().add_subplot(111)
     plotting.plot_state_values(ax, world, f_expect, **style)
+    plt.show()
+
+    irl_reward = maxent.irl(world.p_transition, features, [24], ts, 20, 0.2)
+    value = gw.value_iteration(world.p_transition, reward, 0.8)
+    ts = [*gw.generate_trajectories(200, world, gw.stochastic_policy_adapter(policy), 0, [24])]
+
+    ax = plt.figure().add_subplot(111)
+    plotting.plot_state_values(ax, world, irl_reward, **style)
+    for t in ts:
+        plotting.plot_trajectory(ax, world, t, color='yellow', alpha=0.025)
     plt.show()
 
 

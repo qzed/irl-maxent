@@ -74,3 +74,26 @@ def expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps=1e
 def compute_expected_svf(p_transition, p_initial, terminal, reward, eps=1e-5):
     p_action = local_action_probabilities(p_transition, terminal, reward)
     return expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps)
+
+
+def irl(p_transition, features, terminal, trajectories, n_epochs, learning_rate, eps_esvf=1e-5):
+    n_states, _, n_actions = p_transition.shape
+    _, n_features = features.shape
+
+    # compute static properties from trajectories
+    e_features = feature_expectation_from_trajectories(features, trajectories)
+    p_initial = initial_probabilities_from_trajectories(n_states, trajectories)
+
+    # basic gradient descent
+    theta = 0.1 * np.random.uniform(size=(n_features,))     # TODO: initialization-type as parameter
+    for _ in range(n_epochs):                               # TODO: do until convergence?
+        reward = features.dot(theta)
+
+        e_svf = compute_expected_svf(p_transition, p_initial, terminal, reward, eps_esvf)
+        grad = e_features - features.T.dot(e_svf)
+
+        theta += learning_rate * grad
+        learning_rate = learning_rate ** 2                  # TODO: sgd-algorithm as parameter?
+
+    # re-compute per-state reward and return
+    return features.dot(theta)
