@@ -3,6 +3,7 @@
 import gridworld as gw
 import maxent
 import plotting
+import trajectory as T
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,7 +50,7 @@ def main():
     ax = plt.figure().add_subplot(111)
     plotting.plot_stochastic_policy(ax, world, policy, **style)
 
-    ts = [*gw.generate_trajectories(200, world, gw.stochastic_policy_adapter(policy), 0, [24])]
+    ts = [*T.generate_trajectories(200, world, T.stochastic_policy_adapter(policy), 0, [24])]
     for t in ts:
         plotting.plot_trajectory(ax, world, t, color='yellow', alpha=0.025)
 
@@ -57,7 +58,6 @@ def main():
 
     features = gw.state_features(world)
     f_expect = maxent.feature_expectation_from_trajectories(features, ts)
-    p_initial = maxent.initial_probabilities_from_trajectories(world.n_states, ts)
 
     ax = plt.figure().add_subplot(111)
     plotting.plot_state_values(ax, world, f_expect, **style)
@@ -65,7 +65,7 @@ def main():
 
     irl_reward = maxent.irl(world.p_transition, features, [24], ts, 20, 0.2)
     value = gw.value_iteration(world.p_transition, reward, 0.8)
-    ts = [*gw.generate_trajectories(200, world, gw.stochastic_policy_adapter(policy), 0, [24])]
+    ts = [*T.generate_trajectories(200, world, T.stochastic_policy_adapter(policy), 0, [24])]
 
     ax = plt.figure().add_subplot(111)
     plotting.plot_state_values(ax, world, irl_reward, **style)
