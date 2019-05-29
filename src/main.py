@@ -4,6 +4,7 @@ import gridworld as gw
 import maxent as me
 import plot as P
 import trajectory as T
+import solver as S
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,8 +27,8 @@ def main():
     initial = np.zeros(world.n_states)
     initial[0] = 1.0
 
-    value = gw.value_iteration(world.p_transition, reward, 0.8)
-    policy = gw.optimal_policy_from_value(world, value)
+    value = S.value_iteration(world.p_transition, reward, 0.8)
+    policy = S.optimal_policy_from_value(world, value)
 
     pla = me.local_action_probabilities(world.p_transition, [24], reward)
     svf = me.expected_svf_from_policy(world.p_transition, initial, [24], pla)
@@ -45,7 +46,7 @@ def main():
     P.plot_deterministic_policy(ax, world, policy)
     plt.show()
 
-    policy = gw.stochastic_policy_from_value(world, value, w=lambda x: x**2)
+    policy = S.stochastic_policy_from_value(world, value, w=lambda x: x**2)
 
     ax = plt.figure().add_subplot(111)
     P.plot_stochastic_policy(ax, world, policy, **style)
@@ -64,7 +65,7 @@ def main():
     plt.show()
 
     irl_reward = me.irl(world.p_transition, features, [24], ts, 20, 0.2)
-    value = gw.value_iteration(world.p_transition, reward, 0.8)
+    value = S.value_iteration(world.p_transition, reward, 0.8)
     ts = [*T.generate_trajectories(200, world, T.stochastic_policy_adapter(policy), 0, [24])]
 
     ax = plt.figure().add_subplot(111)
