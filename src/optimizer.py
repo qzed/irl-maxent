@@ -15,7 +15,7 @@ class Optimizer:
         return NormalizeGrad(self, ord)
 
 
-class Sgd(Optimizer):
+class Sga(Optimizer):
     def __init__(self, lr):
         super().__init__()
         self.lr = lr
@@ -32,7 +32,7 @@ class Sgd(Optimizer):
         self.parameters += lr * grad
 
 
-class ExpSgd(Optimizer):
+class ExpSga(Optimizer):
     def __init__(self, lr, normalize=True):
         super().__init__()
         self.lr = lr

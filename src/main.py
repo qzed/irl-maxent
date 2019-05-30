@@ -66,8 +66,8 @@ def main():
     plt.show()
 
     init = opt.Constant(fn=lambda n: 1.0 / n)
-    optim = opt.ExpSgd(lr=0.2, normalize=False)
-    # optim = opt.Sgd(lr=opt.power_decay(0.2))
+    optim = opt.ExpSga(lr=0.2, normalize=False)
+    # optim = opt.Sga(lr=opt.power_decay(0.2))
     irl_reward = me.irl(world.p_transition, features, [24], ts, optim, init, 20)
 
     irl_reward -= irl_reward.min()
