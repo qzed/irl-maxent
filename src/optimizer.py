@@ -33,7 +33,7 @@ class Sga(Optimizer):
 
 
 class ExpSga(Optimizer):
-    def __init__(self, lr, normalize=True):
+    def __init__(self, lr, normalize=False):
         super().__init__()
         self.lr = lr
         self.normalize = normalize
@@ -53,7 +53,7 @@ class ExpSga(Optimizer):
             self.parameters /= self.parameters.sum()
 
         # TODO: compare exp. gradient descent with the one from bziebart's thesis:
-        # theta = theta * np.exp(learning_rate/(k+1) * grad)
+        # self.parameters *= np.exp(lr * grad)
 
 
 class NormalizeGrad(Optimizer):
@@ -70,7 +70,7 @@ class NormalizeGrad(Optimizer):
         return self.opt.step(grad / np.linalg.norm(grad, self.ord), *args, **kwargs)
 
 
-def linear_decay(lr0=0.2, decay_rate=0.5, decay_steps=1.0):
+def linear_decay(lr0=0.2, decay_rate=1.0, decay_steps=1.0):
     def _lr(k):
         return lr0 / (1.0 + decay_rate * np.floor(k / decay_steps))
 
