@@ -1,3 +1,7 @@
+"""
+Tests for gridworld.
+"""
+
 import pytest
 from itertools import product
 
@@ -5,6 +9,20 @@ import gridworld
 
 
 def check_zero_probability(world, sf, st, a):
+    """
+    Check that the transition-probability for the given transition is only
+    non-zero in case of neighboring states or a transition of a state to
+    itself via an edge.
+
+    Args:
+        world: The world to test this on.
+        sf: The state from which the transition originates.
+        st: The state to which the transition should go.
+        a: The action of the transition.
+
+    Raises:
+        AssertionError: In case this check fails.
+    """
     at = world.actions[a]
 
     # if states are neither neighbors or the same state, probability must be zero
@@ -19,6 +37,17 @@ def check_zero_probability(world, sf, st, a):
 
 
 def check_zero_probabilities(world):
+    """
+    Check that all transition-probabilities of the given world are only
+    non-zero in case of neighboring states or a transition of a state to
+    itself via an edge.
+
+    Args:
+        world: The world to test this on.
+
+    Raises:
+        AssertionError: In case this check fails.
+    """
     for sf in product(range(world.size), range(world.size)):
         for st in product(range(world.size), range(world.size)):
             for a in range(world.n_actions):
@@ -26,8 +55,20 @@ def check_zero_probabilities(world):
 
 
 def test_probabilities_gridworld(size=5):
+    """
+    Check transition-probabilities for GridWorld
+
+    Args:
+        size: The size of the world to be used for testing.
+    """
     check_zero_probabilities(gridworld.GridWorld(size))
 
 
 def test_probabilities_icy_gridworld(size=5):
+    """
+    Check transition-probabilities for IcyGridWorld
+
+    Args:
+        size: The size of the world to be used for testing.
+    """
     check_zero_probabilities(gridworld.IcyGridWorld(size))
