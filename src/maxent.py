@@ -76,7 +76,7 @@ def compute_expected_svf(p_transition, p_initial, terminal, reward, eps=1e-5):
     return expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps)
 
 
-def irl(p_transition, features, terminal, trajectories, optim, init, n_epochs, eps_esvf=1e-5):
+def irl(p_transition, features, terminal, trajectories, optim, init, eps=1e-4, eps_esvf=1e-5):
     n_states, _, n_actions = p_transition.shape
     _, n_features = features.shape
 
@@ -86,15 +86,19 @@ def irl(p_transition, features, terminal, trajectories, optim, init, n_epochs, e
 
     # basic gradient descent
     theta = init(n_features)
-    optim.reset(theta)
+    delta = np.inf
 
-    for _ in range(n_epochs):                               # TODO: do until convergence?
+    optim.reset(theta)
+    while delta > eps:
+        theta_old = theta.copy()
+
         reward = features.dot(theta)
 
         e_svf = compute_expected_svf(p_transition, p_initial, terminal, reward, eps_esvf)
         grad = e_features - features.T.dot(e_svf)
 
         optim.step(grad)
+        delta = np.max(np.abs(theta_old - theta))
 
     # re-compute per-state reward and return
     return features.dot(theta)

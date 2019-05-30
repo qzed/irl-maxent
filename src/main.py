@@ -69,7 +69,7 @@ def main():
     optim = opt.ExpSga(lr=0.2)
     # optim = opt.ExpSga(lr=opt.linear_decay(0.2))
     # optim = opt.Sga(lr=opt.power_decay(0.2))
-    irl_reward = me.irl(world.p_transition, features, [24], ts, optim, init, 20)
+    irl_reward = me.irl(world.p_transition, features, [24], ts, optim, init)
 
     irl_reward -= irl_reward.min()
     irl_reward /= irl_reward.sum()
