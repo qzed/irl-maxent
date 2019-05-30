@@ -43,17 +43,14 @@ class ExpSga(Optimizer):
         super().reset(parameters)
         self.k = 0
 
-    def step(self, grad, x, *args, **kwargs):
+    def step(self, grad, *args, **kwargs):
         lr = self.lr if not callable(self.lr) else self.lr(self.k)
         self.k += 1
 
-        self.parameters *= np.exp(lr * grad * x)
+        self.parameters *= np.exp(lr * grad)
 
         if self.normalize:
             self.parameters /= self.parameters.sum()
-
-        # TODO: compare exp. gradient descent with the one from bziebart's thesis:
-        # self.parameters *= np.exp(lr * grad)
 
 
 class NormalizeGrad(Optimizer):

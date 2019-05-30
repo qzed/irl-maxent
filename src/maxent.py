@@ -94,7 +94,7 @@ def irl(p_transition, features, terminal, trajectories, optim, init, n_epochs, e
         e_svf = compute_expected_svf(p_transition, p_initial, terminal, reward, eps_esvf)
         grad = e_features - features.T.dot(e_svf)
 
-        optim.step(grad, x=features.T.dot(e_svf))
+        optim.step(grad)
 
     # re-compute per-state reward and return
     return features.dot(theta)
