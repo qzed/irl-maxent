@@ -76,7 +76,7 @@ def compute_expected_svf(p_transition, p_initial, terminal, reward, eps=1e-5):
     return expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps)
 
 
-def irl(p_transition, features, terminal, trajectories, n_epochs, learning_rate, eps_esvf=1e-5):
+def irl(p_transition, features, terminal, trajectories, optim, init, n_epochs, eps_esvf=1e-5):
     n_states, _, n_actions = p_transition.shape
     _, n_features = features.shape
 
@@ -85,23 +85,16 @@ def irl(p_transition, features, terminal, trajectories, n_epochs, learning_rate,
     p_initial = initial_probabilities_from_trajectories(n_states, trajectories)
 
     # basic gradient descent
-    theta = np.ones(n_features) / n_features
-    # theta = 0.1 * np.random.uniform(size=(n_features,))   # TODO: initialization-type as parameter
-    for k in range(n_epochs):                               # TODO: do until convergence?
+    theta = init(n_features)
+    optim.reset(theta)
+
+    for _ in range(n_epochs):                               # TODO: do until convergence?
         reward = features.dot(theta)
 
         e_svf = compute_expected_svf(p_transition, p_initial, terminal, reward, eps_esvf)
         grad = e_features - features.T.dot(e_svf)
 
-        # alpha = learning_rate
-        alpha = learning_rate / (k+1)**2                    # TODO: sgd-algorithm as parameter?
-        # alpha = learning_rate * np.exp(-2 * k)            # TODO: sgd-algorithm as parameter?
-        # theta += alpha * grad
-        theta = theta * np.exp(alpha * grad * features.T.dot(e_svf))
-        theta = theta / theta.sum()
-
-        # TODO: compare exp. gradient descent with the one from bziebart's thesis:
-        # theta = theta * np.exp(learning_rate/(k+1) * grad)
+        optim.step(grad, x=features.T.dot(e_svf))
 
     # re-compute per-state reward and return
     return features.dot(theta)

@@ -5,6 +5,7 @@ import maxent as me
 import plot as P
 import trajectory as T
 import solver as S
+import optimizer as opt
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -64,8 +65,16 @@ def main():
     P.plot_state_values(ax, world, f_expect, **style)
     plt.show()
 
-    irl_reward = me.irl(world.p_transition, features, [24], ts, 20, 0.2)
-    value = S.value_iteration(world.p_transition, reward, 0.8)
+    init = opt.Constant(fn=lambda n: 1.0 / n)
+    optim = opt.ExpSgd(lr=0.2, normalize=False)
+    # optim = opt.Sgd(lr=opt.power_decay(0.2))
+    irl_reward = me.irl(world.p_transition, features, [24], ts, optim, init, 20)
+
+    irl_reward -= irl_reward.min()
+    irl_reward /= irl_reward.sum()
+
+    value = S.value_iteration(world.p_transition, irl_reward, 0.8)
+    policy = S.stochastic_policy_from_value(world, value, w=lambda x: x**2)
     ts = [*T.generate_trajectories(200, world, T.stochastic_policy_adapter(policy), 0, [24])]
 
     ax = plt.figure().add_subplot(111)
