@@ -1,3 +1,7 @@
+"""
+Utilities for plotting.
+"""
+
 from itertools import product
 
 import numpy as np
@@ -7,6 +11,20 @@ import matplotlib.tri as tri
 
 
 def plot_transition_probabilities(ax, world, border=None, **kwargs):
+    """
+    Plot the transition probabilities of a GridWorld instance.
+
+    Args:
+        ax: The matplotlib Axes instance used for plotting.
+        world: The GridWorld for which the transition probabilities should
+            be plotted.
+        border: A map containing styling information regarding the
+            state-action borders. All key-value pairs are directly forwarded
+            to `pyplot.triplot`.
+
+        All further key-value arguments will be forwarded to
+        `pyplot.tripcolor`.
+    """
     xy = [(x - 0.5, y - 0.5) for y, x in product(range(world.size + 1), range(world.size + 1))]
     xy += [(x, y) for y, x in product(range(world.size), range(world.size))]
 
@@ -52,6 +70,21 @@ def plot_transition_probabilities(ax, world, border=None, **kwargs):
 
 
 def plot_state_values(ax, world, values, border, **kwargs):
+    """
+    Plot the given state values of a GridWorld instance.
+
+    Args:
+        ax: The matplotlib Axes instance used for plotting.
+        world: The GridWorld for which the state-values should be plotted.
+        values: The state-values to be plotted as table
+            `[state: Integer] -> value: Float`.
+        border: A map containing styling information regarding the state
+            borders. All key-value pairs are directly forwarded to
+            `pyplot.triplot`.
+
+        All further key-value arguments will be forwarded to
+        `pyplot.imshow`.
+    """
     ax.imshow(np.reshape(values, (world.size, world.size)), origin='lower', **kwargs)
 
     if border is not None:
@@ -61,6 +94,18 @@ def plot_state_values(ax, world, values, border, **kwargs):
 
 
 def plot_deterministic_policy(ax, world, policy, **kwargs):
+    """
+    Plot a deterministic policy as arrows.
+
+    Args:
+        ax: The matplotlib Axes instance used for plotting.
+        world: The GridWorld for which the policy should be plotted.
+        policy: The policy to be plotted as table
+            `[state: Index] -> action: Index`.
+
+        All further key-value arguments will be forwarded to
+        `pyplot.arrow`.
+    """
     arrow_direction = [(0.33, 0), (-0.33, 0), (0, 0.33), (0, -0.33)]
 
     for state in range(world.n_states):
@@ -70,6 +115,24 @@ def plot_deterministic_policy(ax, world, policy, **kwargs):
 
 
 def plot_stochastic_policy(ax, world, policy, border=None, **kwargs):
+    """
+    Plot a stochastic policy.
+
+    Args:
+        ax: The matplotlib Axes instance used for plotting.
+        world: The GridWorld for which the policy should be plotted.
+        policy: The stochastic policy to be plotted as table
+            `[state: Index, action: Index] -> probability: Float`
+            representing the probability p(action | state) of an action
+            given a state.
+        border: A map containing styling information regarding the
+            state-action borders. All key-value pairs are directly forwarded
+            to `pyplot.triplot`.
+
+        All further key-value arguments will be forwarded to
+        `pyplot.tripcolor`.
+
+    """
     xy = [(x - 0.5, y - 0.5) for y, x in product(range(world.size + 1), range(world.size + 1))]
     xy += [(x, y) for y, x in product(range(world.size), range(world.size))]
 
@@ -111,6 +174,18 @@ def plot_stochastic_policy(ax, world, policy, border=None, **kwargs):
 
 
 def plot_trajectory(ax, world, trajectory, **kwargs):
+    """
+    Plot a trajectory as line.
+
+    Args:
+        ax: The matplotlib Axes instance used for plotting.
+        world: The GridWorld for which the trajectory should be plotted.
+        trajectory: The `Trajectory` object to be plotted.
+
+        All further key-value arguments will be forwarded to
+        `pyplot.tripcolor`.
+
+    """
     xy = [world.state_index_to_point(s) for s in trajectory.states()]
     x, y = zip(*xy)
 
