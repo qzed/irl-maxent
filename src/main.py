@@ -65,7 +65,7 @@ def main():
     P.plot_state_values(ax, world, f_expect, **style)
     plt.show()
 
-    init = opt.Constant(fn=lambda n: 1.0 / n)
+    init = opt.Constant(lambda n: 1.0 / n)
     optim = opt.ExpSga(lr=0.2)
     # optim = opt.ExpSga(lr=opt.linear_decay(0.2))
     # optim = opt.Sga(lr=opt.power_decay(0.2))
