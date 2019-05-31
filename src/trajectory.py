@@ -61,7 +61,7 @@ def generate_trajectory(world, policy, start, final):
             returned.
 
     Returns:
-        A generated trajectory adhering to the given arguments.
+        A generated Trajectory instance adhering to the given arguments.
     """
 
     state = start
@@ -100,8 +100,8 @@ def generate_trajectories(n, world, policy, start, final):
             complete.
 
     Returns:
-        A generator expression generating `n` trajectories adhering to the
-        given arguments.
+        A generator expression generating `n` `Trajectory` instances
+        adhering to the given arguments.
     """
     return (generate_trajectory(world, policy, start, final) for _ in range(n))
 
