@@ -23,6 +23,7 @@ def main():
     plt.show()
 
     reward = np.zeros(world.n_states)
+    reward[9] = 0.65
     reward[-1] = 1.0
 
     initial = np.zeros(world.n_states)
@@ -66,21 +67,34 @@ def main():
     plt.show()
 
     init = opt.Constant(lambda n: 1.0 / n)
-    optim = opt.ExpSga(lr=0.2)
-    # optim = opt.ExpSga(lr=opt.linear_decay(0.2))
+    # optim = opt.ExpSga(lr=0.2)
+    optim = opt.ExpSga(lr=opt.linear_decay(0.2))
     # optim = opt.Sga(lr=opt.power_decay(0.2))
-    irl_reward = me.irl(world.p_transition, features, [24], ts, optim, init)
-
-    irl_reward -= irl_reward.min()
-    irl_reward /= irl_reward.sum()
+    irl_reward = me.irl_causal(world.p_transition, features, [24], ts, optim, init, 0.9)
 
     value = S.value_iteration(world.p_transition, irl_reward, 0.8)
     policy = S.stochastic_policy_from_value(world, value, w=lambda x: x**2)
-    ts = [*T.generate_trajectories(200, world, T.stochastic_policy_adapter(policy), 0, [24])]
+    tsx = [*T.generate_trajectories(200, world, T.stochastic_policy_adapter(policy), 0, [24])]
 
     ax = plt.figure().add_subplot(111)
     P.plot_state_values(ax, world, irl_reward, **style)
-    for t in ts:
+    for t in tsx:
+        P.plot_trajectory(ax, world, t, color='yellow', alpha=0.025)
+    plt.show()
+
+    init = opt.Constant(lambda n: 1.0 / n)
+    # optim = opt.ExpSga(lr=0.2)
+    optim = opt.ExpSga(lr=opt.linear_decay(0.2))
+    # optim = opt.Sga(lr=opt.power_decay(0.2))
+    irl_reward = me.irl(world.p_transition, features, [24], ts, optim, init)
+
+    value = S.value_iteration(world.p_transition, irl_reward, 0.8)
+    policy = S.stochastic_policy_from_value(world, value, w=lambda x: x**2)
+    tsx = [*T.generate_trajectories(200, world, T.stochastic_policy_adapter(policy), 0, [24])]
+
+    ax = plt.figure().add_subplot(111)
+    P.plot_state_values(ax, world, irl_reward, **style)
+    for t in tsx:
         P.plot_trajectory(ax, world, t, color='yellow', alpha=0.025)
     plt.show()
 
