@@ -1,7 +1,9 @@
 """
-Maximum Entropy Inverse Reinforcement Learning.
+Maximum Entropy Inverse Reinforcement Learning and Maximum Causal Entropy
+Inverse Reinforcement Learning.
 
-Based on the corresponding paper by B. Ziebart et al. (2008).
+Based on the corresponding paper by B. Ziebart et al. (2008) and the Thesis
+by Ziebart (2010).
 """
 
 import numpy as np
