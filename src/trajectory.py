@@ -94,7 +94,13 @@ def generate_trajectories(n, world, policy, start, final):
             invokations with the same state, i.e. it may make a
             probabilistic decision and will be invoked anew every time a
             (new or old) state is visited (again).
-        start: The starting state (as Integer index).
+        start: The starting state (as Integer index), a list of starting
+            states (with uniform probability), or a list of starting state
+            probabilities, mapping each state to a probability. Iff the
+            length of the provided list is equal to the number of states, it
+            is assumed to be a probability distribution over all states.
+            Otherwise it is assumed to be a list containing all starting
+            state indices, an individual state is then chosen uniformly.
         final: A collection of terminal states. If a trajectory reaches a
             terminal state, generation is complete and the trajectory is
             complete.
@@ -103,7 +109,17 @@ def generate_trajectories(n, world, policy, start, final):
         A generator expression generating `n` `Trajectory` instances
         adhering to the given arguments.
     """
-    return (generate_trajectory(world, policy, start, final) for _ in range(n))
+    start_states = np.atleast_1d(start)
+
+    def _generate_one():
+        if len(start_states) == world.n_states:
+            s = np.random.choice(range(world.n_states), p=start_states)
+        else:
+            s = np.random.choice(start_states)
+
+        return generate_trajectory(world, policy, s, final)
+
+    return (_generate_one() for _ in range(n))
 
 
 def policy_adapter(policy):
