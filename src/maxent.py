@@ -8,6 +8,8 @@ import numpy as np
 from itertools import product
 
 
+# -- common functions ----------------------------------------------------------
+
 def feature_expectation_from_trajectories(features, trajectories):
     """
     Compute the feature expectation of the given trajectories.
@@ -54,50 +56,6 @@ def initial_probabilities_from_trajectories(n_states, trajectories):
         p[t.transitions()[0][0]] += 1.0
 
     return p / len(trajectories)
-
-
-def local_action_probabilities(p_transition, terminal, reward):
-    """
-    Compute the local action probabilities required for the edge frequency
-    calculation.
-
-    This is the backward pass of Algorithm 1 of the Maximum Entropy IRL
-    paper by Ziebart et al. (2008).
-
-    Args:
-        p_transition: The transition probabilities of the MDP as table
-            `[from: Integer, to: Integer, action: Integer] -> probability: Float`
-            specifying the probability of a transition from state `from` to
-            state `to` via action `action` to succeed.
-        terminal: A set/list of terminal states.
-        reward: The reward signal per state as table
-            `[state: Integer] -> reward: Float`.
-
-    Returns:
-        The local action probabilities as map
-        `[state: Integer, action: Integer] -> probability: Float`
-    """
-    n_states, _, n_actions = p_transition.shape
-
-    er = np.exp(reward)
-    p = [np.array(p_transition[:, :, a]) for a in range(n_actions)]
-
-    # initialize at terminal states
-    zs = np.zeros(n_states)
-    for s in terminal:
-        zs[s] = 1.0
-
-    # perform backward pass
-    # This does not converge, instead we iterate a fixed number of steps. The
-    # number of steps is chosen to reflect the maximum steps required to
-    # guarantee propagation from any state to any other state and back in an
-    # arbitrary MDP defined by p_transition.
-    for _ in range(2 * n_states):
-        za = np.array([er * p[a].dot(zs) for a in range(n_actions)]).T
-        zs = za.sum(axis=1)
-
-    # compute local action probabilities
-    return za / zs[:, None]
 
 
 def expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps=1e-5):
@@ -152,6 +110,52 @@ def expected_svf_from_policy(p_transition, p_initial, terminal, p_action, eps=1e
         delta, d = np.max(np.abs(d_ - d)), d_
 
     return d
+
+
+# -- plain maximum entropy (Ziebart et al. 2008) -------------------------------
+
+def local_action_probabilities(p_transition, terminal, reward):
+    """
+    Compute the local action probabilities required for the edge frequency
+    calculation.
+
+    This is the backward pass of Algorithm 1 of the Maximum Entropy IRL
+    paper by Ziebart et al. (2008).
+
+    Args:
+        p_transition: The transition probabilities of the MDP as table
+            `[from: Integer, to: Integer, action: Integer] -> probability: Float`
+            specifying the probability of a transition from state `from` to
+            state `to` via action `action` to succeed.
+        terminal: A set/list of terminal states.
+        reward: The reward signal per state as table
+            `[state: Integer] -> reward: Float`.
+
+    Returns:
+        The local action probabilities as map
+        `[state: Integer, action: Integer] -> probability: Float`
+    """
+    n_states, _, n_actions = p_transition.shape
+
+    er = np.exp(reward)
+    p = [np.array(p_transition[:, :, a]) for a in range(n_actions)]
+
+    # initialize at terminal states
+    zs = np.zeros(n_states)
+    for s in terminal:
+        zs[s] = 1.0
+
+    # perform backward pass
+    # This does not converge, instead we iterate a fixed number of steps. The
+    # number of steps is chosen to reflect the maximum steps required to
+    # guarantee propagation from any state to any other state and back in an
+    # arbitrary MDP defined by p_transition.
+    for _ in range(2 * n_states):
+        za = np.array([er * p[a].dot(zs) for a in range(n_actions)]).T
+        zs = za.sum(axis=1)
+
+    # compute local action probabilities
+    return za / zs[:, None]
 
 
 def compute_expected_svf(p_transition, p_initial, terminal, reward, eps=1e-5):
@@ -248,3 +252,44 @@ def irl(p_transition, features, terminal, trajectories, optim, init, eps=1e-4, e
 
     # re-compute per-state reward and return
     return features.dot(theta)
+
+
+# -- maximum causal entropy (Ziebart 2010) -------------------------------------
+
+def softmax(x1, x2):
+    x_max = np.maximum(x1, x2)
+    x_min = np.minimum(x1, x2)
+    return x_max + np.log(1.0 + np.exp(x_min - x_max))
+
+
+def local_causal_action_probabilities(p_transition, reward, terminal, discount, eps=1e-5):
+    softmax_ = np.frompyfunc(softmax, 2, 1)
+    n_states, _, n_actions = p_transition.shape
+
+    # set up terminal reward function
+    if len(terminal) == n_states:
+        reward_terminal = np.array(terminal, dtype=np.float)
+    else:
+        reward_terminal = -np.inf * np.ones(n_states)
+        reward_terminal[terminal] = 0.0
+
+    # set up transition probability matrices
+    p = [np.array(p_transition[:, :, a]) for a in range(n_actions)]
+
+    # compute state log partition V and state-action log partition Q
+    v = -1e300 * np.ones(n_states)  # np.dot doesn't behave with -np.inf
+
+    delta = np.inf
+    while delta > eps:
+        v_old = v
+
+        q = np.array([reward + discount * p[a].dot(v_old) for a in range(n_actions)]).T
+        v = softmax_.reduce([reward_terminal] + [q[:, a] for a in range(n_actions)], axis=0)
+
+        # for some reason numpy chooses an array of objects after reduction, force floats here
+        v = np.array(v, dtype=np.float)
+
+        delta = np.max(np.abs(v - v_old))
+
+    # compute and return policy
+    return np.exp(q - v[:, None])
