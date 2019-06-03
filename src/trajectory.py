@@ -42,6 +42,12 @@ class Trajectory:
         """
         return map(lambda x: x[0], chain(self._t, [(self._t[-1][2], 0, 0)]))
 
+    def __repr__(self):
+        return "Trajectory({})".format(repr(self._t))
+
+    def __str__(self):
+        return "{}".format(self._t)
+
 
 def generate_trajectory(world, policy, start, final):
     """

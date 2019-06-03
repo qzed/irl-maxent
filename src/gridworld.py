@@ -170,6 +170,9 @@ class GridWorld:
         # otherwise this transition is impossible
         return 0.0
 
+    def __repr__(self):
+        return "GridWorld(size={})".format(self.size)
+
 
 class IcyGridWorld(GridWorld):
     """
@@ -243,6 +246,9 @@ class IcyGridWorld(GridWorld):
 
         # otherwise this transition is impossible
         return 0.0
+
+    def __repr__(self):
+        return "IcyGridWorld(size={}, p_slip={})".format(self.size, self.p_slip)
 
 
 def state_features(world):
