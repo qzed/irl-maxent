@@ -1,101 +1,140 @@
 #!/usr/bin/env python
 
-import gridworld as gw
-import maxent as me
+import gridworld as W
+import maxent as M
 import plot as P
 import trajectory as T
 import solver as S
-import optimizer as opt
+import optimizer as O
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 
+def setup_mdp():
+    """
+    Set-up our MDP/GridWorld
+    """
+    # create our world
+    world = W.IcyGridWorld(size=5, p_slip=0.2)
+
+    # set up the reward function
+    reward = np.zeros(world.n_states)
+    reward[-1] = 1.0
+    reward[8] = 0.65
+
+    # set up terminal states
+    terminal = [24]
+
+    return world, reward, terminal
+
+
+def generate_trajectories(world, reward, terminal):
+    """
+    Generate some "expert" trajectories.
+    """
+    # parameters
+    n_trajectories = 200
+    discount = 0.7
+    weighting = lambda x: x**5
+
+    # set up initial probabilities for trajectory generation
+    initial = np.zeros(world.n_states)
+    initial[0] = 1.0
+
+    # generate trajectories
+    value = S.value_iteration(world.p_transition, reward, discount)
+    policy = S.stochastic_policy_from_value(world, value, w=weighting)
+    policy_exec = T.stochastic_policy_adapter(policy)
+    tjs = list(T.generate_trajectories(n_trajectories, world, policy_exec, initial, terminal))
+
+    return tjs, policy
+
+
+def maxent(world, terminal, trajectories):
+    """
+    Maximum Entropy Inverse Reinforcement Learning
+    """
+    # set up features: we use one feature vector per state
+    features = W.state_features(world)
+
+    # choose our parameter initialization strategy:
+    #   initialize parameters with constant
+    init = O.Constant(lambda n: 1.0 / n)
+
+    # choose our optimization strategy:
+    #   we select exponentiated gradient descent with linear learning-rate decay
+    optim = O.ExpSga(lr=O.linear_decay(lr0=0.2))
+
+    # actually do some inverse reinforcement learning
+    reward = M.irl(world.p_transition, features, terminal, trajectories, optim, init)
+
+    return reward
+
+
+def maxent_causal(world, terminal, trajectories, discount=0.7):
+    """
+    Maximum Causal Entropy Inverse Reinforcement Learning
+    """
+    # set up features: we use one feature vector per state
+    features = W.state_features(world)
+
+    # choose our parameter initialization strategy:
+    #   initialize parameters with constant
+    init = O.Constant(lambda n: 1.0 / n)
+
+    # choose our optimization strategy:
+    #   we select exponentiated gradient descent with linear learning-rate decay
+    optim = O.ExpSga(lr=O.linear_decay(lr0=0.2))
+
+    # actually do some inverse reinforcement learning
+    reward = M.irl_causal(world.p_transition, features, terminal, trajectories, optim, init, discount)
+
+    return reward
+
+
 def main():
+    # common style arguments for plotting
     style = {
         'border': {'color': 'red', 'linewidth': 0.5},
     }
 
-    world = gw.IcyGridWorld(5)
+    # set-up mdp
+    world, reward, terminal = setup_mdp()
 
-    ax = plt.figure().add_subplot(111)
-    P.plot_transition_probabilities(ax, world, **style)
-    plt.show()
+    # show our original reward
+    ax = plt.figure(num='Original Reward').add_subplot(111)
+    P.plot_state_values(ax, world, reward, **style)
+    plt.draw()
 
-    reward = np.zeros(world.n_states)
-    reward[9] = 0.65
-    reward[-1] = 1.0
+    # generate "expert" trajectories
+    trajectories, expert_policy = generate_trajectories(world, reward, terminal)
 
-    initial = np.zeros(world.n_states)
-    initial[0] = 1.0
+    # show our expert policies
+    ax = plt.figure(num='Expert Trajectories and Policy').add_subplot(111)
+    P.plot_stochastic_policy(ax, world, expert_policy, **style)
 
-    value = S.value_iteration(world.p_transition, reward, 0.8)
-    policy = S.optimal_policy_from_value(world, value)
-
-    pla = me.local_action_probabilities(world.p_transition, [24], reward)
-    svf = me.expected_svf_from_policy(world.p_transition, initial, [24], pla)
-
-    ax = plt.figure().add_subplot(111)
-    P.plot_stochastic_policy(ax, world, pla, **style)
-    plt.show()
-
-    ax = plt.figure().add_subplot(111)
-    P.plot_state_values(ax, world, svf, **style)
-    plt.show()
-
-    ax = plt.figure().add_subplot(111)
-    P.plot_state_values(ax, world, value, **style)
-    P.plot_deterministic_policy(ax, world, policy)
-    plt.show()
-
-    policy = S.stochastic_policy_from_value(world, value, w=lambda x: x**2)
-
-    ax = plt.figure().add_subplot(111)
-    P.plot_stochastic_policy(ax, world, policy, **style)
-
-    ts = [*T.generate_trajectories(200, world, T.stochastic_policy_adapter(policy), 0, [24])]
-    for t in ts:
+    for t in trajectories:
         P.plot_trajectory(ax, world, t, color='yellow', alpha=0.025)
 
-    plt.show()
+    plt.draw()
 
-    features = gw.state_features(world)
-    f_expect = me.feature_expectation_from_trajectories(features, ts)
+    # maximum entropy reinforcement learning (non-causal)
+    reward_maxent = maxent(world, terminal, trajectories)
 
-    ax = plt.figure().add_subplot(111)
-    P.plot_state_values(ax, world, f_expect, **style)
-    plt.show()
+    # show the computed reward
+    ax = plt.figure(num='MaxEnt Reward').add_subplot(111)
+    P.plot_state_values(ax, world, reward_maxent, **style)
+    plt.draw()
 
-    init = opt.Constant(lambda n: 1.0 / n)
-    # optim = opt.ExpSga(lr=0.2)
-    optim = opt.ExpSga(lr=opt.linear_decay(0.2))
-    # optim = opt.Sga(lr=opt.power_decay(0.2))
-    irl_reward = me.irl_causal(world.p_transition, features, [24], ts, optim, init, 0.9)
+    # maximum casal entropy reinforcement learning (non-causal)
+    reward_maxcausal = maxent_causal(world, terminal, trajectories)
 
-    value = S.value_iteration(world.p_transition, irl_reward, 0.8)
-    policy = S.stochastic_policy_from_value(world, value, w=lambda x: x**2)
-    tsx = [*T.generate_trajectories(200, world, T.stochastic_policy_adapter(policy), 0, [24])]
+    # show the computed reward
+    ax = plt.figure(num='MaxEnt Reward (Causal)').add_subplot(111)
+    P.plot_state_values(ax, world, reward_maxcausal, **style)
+    plt.draw()
 
-    ax = plt.figure().add_subplot(111)
-    P.plot_state_values(ax, world, irl_reward, **style)
-    for t in tsx:
-        P.plot_trajectory(ax, world, t, color='yellow', alpha=0.025)
-    plt.show()
-
-    init = opt.Constant(lambda n: 1.0 / n)
-    # optim = opt.ExpSga(lr=0.2)
-    optim = opt.ExpSga(lr=opt.linear_decay(0.2))
-    # optim = opt.Sga(lr=opt.power_decay(0.2))
-    irl_reward = me.irl(world.p_transition, features, [24], ts, optim, init)
-
-    value = S.value_iteration(world.p_transition, irl_reward, 0.8)
-    policy = S.stochastic_policy_from_value(world, value, w=lambda x: x**2)
-    tsx = [*T.generate_trajectories(200, world, T.stochastic_policy_adapter(policy), 0, [24])]
-
-    ax = plt.figure().add_subplot(111)
-    P.plot_state_values(ax, world, irl_reward, **style)
-    for t in tsx:
-        P.plot_trajectory(ax, world, t, color='yellow', alpha=0.025)
     plt.show()
 
 
