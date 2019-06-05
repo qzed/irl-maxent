@@ -115,7 +115,7 @@ def main():
     P.plot_stochastic_policy(ax, world, expert_policy, **style)
 
     for t in trajectories:
-        P.plot_trajectory(ax, world, t, color='yellow', alpha=0.025)
+        P.plot_trajectory(ax, world, t, lw=5, color='white', alpha=0.025)
 
     plt.draw()
 
