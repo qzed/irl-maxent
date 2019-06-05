@@ -144,8 +144,7 @@ def local_action_probabilities(p_transition, terminal, reward):
 
     # initialize at terminal states
     zs = np.zeros(n_states)
-    for s in terminal:
-        zs[s] = 1.0
+    zs[terminal] = 1.0
 
     # perform backward pass
     # This does not converge, instead we iterate a fixed number of steps. The
