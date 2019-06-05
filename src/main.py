@@ -60,7 +60,7 @@ def maxent(world, terminal, trajectories):
 
     # choose our parameter initialization strategy:
     #   initialize parameters with constant
-    init = O.Constant(lambda n: 1.0 / n)
+    init = O.Constant(1.0)
 
     # choose our optimization strategy:
     #   we select exponentiated gradient descent with linear learning-rate decay
@@ -81,7 +81,7 @@ def maxent_causal(world, terminal, trajectories, discount=0.7):
 
     # choose our parameter initialization strategy:
     #   initialize parameters with constant
-    init = O.Constant(lambda n: 1.0 / n)
+    init = O.Constant(1.0)
 
     # choose our optimization strategy:
     #   we select exponentiated gradient descent with linear learning-rate decay
