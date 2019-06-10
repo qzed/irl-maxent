@@ -63,10 +63,12 @@ def plot_transition_probabilities(ax, world, border=None, **kwargs):
     ax.set_xlim(-0.5, world.size - 0.5)
     ax.set_ylim(-0.5, world.size - 0.5)
 
-    ax.tripcolor(x, y, t, facecolors=v, vmin=0.0, vmax=1.0, **kwargs)
+    p = ax.tripcolor(x, y, t, facecolors=v, vmin=0.0, vmax=1.0, **kwargs)
 
     if border is not None:
         ax.triplot(x, y, t, **border)
+
+    return p
 
 
 def plot_state_values(ax, world, values, border, **kwargs):
@@ -85,12 +87,14 @@ def plot_state_values(ax, world, values, border, **kwargs):
         All further key-value arguments will be forwarded to
         `pyplot.imshow`.
     """
-    ax.imshow(np.reshape(values, (world.size, world.size)), origin='lower', **kwargs)
+    p = ax.imshow(np.reshape(values, (world.size, world.size)), origin='lower', **kwargs)
 
     if border is not None:
         for i in range(0, world.size + 1):
             ax.plot([i - 0.5, i - 0.5], [-0.5, world.size - 0.5], **border, label=None)
             ax.plot([-0.5, world.size - 0.5], [i - 0.5, i - 0.5], **border, label=None)
+
+    return p
 
 
 def plot_deterministic_policy(ax, world, policy, **kwargs):
@@ -131,7 +135,6 @@ def plot_stochastic_policy(ax, world, policy, border=None, **kwargs):
 
         All further key-value arguments will be forwarded to
         `pyplot.tripcolor`.
-
     """
     xy = [(x - 0.5, y - 0.5) for y, x in product(range(world.size + 1), range(world.size + 1))]
     xy += [(x, y) for y, x in product(range(world.size), range(world.size))]
@@ -167,10 +170,12 @@ def plot_stochastic_policy(ax, world, policy, border=None, **kwargs):
     ax.set_xlim(-0.5, world.size - 0.5)
     ax.set_ylim(-0.5, world.size - 0.5)
 
-    ax.tripcolor(x, y, t, facecolors=v, vmin=0.0, vmax=1.0, **kwargs)
+    p = ax.tripcolor(x, y, t, facecolors=v, vmin=0.0, vmax=1.0, **kwargs)
 
     if border is not None:
         ax.triplot(x, y, t, **border)
+
+    return p
 
 
 def plot_trajectory(ax, world, trajectory, **kwargs):
@@ -189,4 +194,4 @@ def plot_trajectory(ax, world, trajectory, **kwargs):
     xy = [world.state_index_to_point(s) for s in trajectory.states()]
     x, y = zip(*xy)
 
-    ax.plot(x, y, **kwargs)
+    return ax.plot(x, y, **kwargs)
