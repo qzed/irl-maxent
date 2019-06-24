@@ -3,6 +3,8 @@
 This is a python implementation of the Maximum Entropy Inverse Reinforcement Learning (MaxEnt IRL) algorithm based on the similarly named paper by Ziebart et al. and the Maximum Causal Entropy Inverse Reinforcement Learning (MaxCausalEnt IRL) algorithm based on his PhD thesis.
 Project for the Advanced Seminar in Imitation Learning, summer term 2019, University of Stuttgart.
 
+You may also want to have a look at the accompanying [presentation][presentation].
+
 For an example demonstrating how the Maximum (non-causal) Entropy IRL algorithm works, see the corresponding Jupyter notebook ([`notebooks/maxent.ipynb`][nb-viewer]).
 Note that the provided python files (`src/`) contain a slightly more optimized implementation of the algorithms.
 
@@ -19,3 +21,4 @@ The framework contains:
 This project solely relies on the following dependencies: `numpy`, `matplotlib`, `itertools`, and `pytest`.
 
 [nb-viewer]: https://nbviewer.jupyter.org/github/qzed/irl-maxent/blob/master/notebooks/maxent.ipynb
+[presentation]: https://nbviewer.jupyter.org/github/qzed/irl-maxent/blob/master/Presentation.pdf
