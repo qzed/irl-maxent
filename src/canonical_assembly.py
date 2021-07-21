@@ -3,71 +3,37 @@ import numpy as np
 from itertools import product  # Cartesian product for iterators
 import optimizer as O  # stochastic gradient descent optimizer
 
-# ------------------------------------------------- Complex Task ---------------------------------------------------- #
-
-# actions = [0,   # insert main wing
-#            1,   # insert tail wing
-#            2,   # insert right wing tip
-#            3,   # insert left wing tip
-#            4,   # insert long bolt into main wing 1
-#            5,   # insert long bolt into main wing 2
-#            6,   # insert long bolt into main wing 3
-#            7,   # insert long bolt into main wing 4
-#            8,   # insert long bolt into tail wing 1
-#            9,   # insert long bolt into tail wing 2
-#            10,  # screw long bolt into main wing 1
-#            11,  # screw long bolt into main wing 2
-#            12,  # screw long bolt into main wing 3
-#            13,  # screw long bolt into main wing 4
-#            14,  # screw long bolt into tail wing 1
-#            15,  # screw long bolt into tail wing 2
-#            16,  # screw propeller 1
-#            17,  # screw propeller 2
-#            18,  # screw propeller 3
-#            19,  # screw propeller 4
-#            20,  # screw propeller base
-#            21]  # screw propeller cap
-
+# ----------------------------------------------- Canonical Task ----------------------------------------------------- #
 # actions that can be taken in the complex task
-actions = [0,  # insert main wing
-           1,  # insert tail wing
-           2,  # insert right wing tip
-           3,  # insert left wing tip
-           4,  # insert long bolt into main wing
-           5,  # insert long bolt into tail wing
-           6,  # screw long bolt into main wing
-           7,  # screw long bolt into tail wing
-           8,  # screw propeller
-           9,  # screw propeller base
-           10]  # screw propeller cap
+actions = [0,  # insert long bolt
+           1,  # insert short bolt
+           2,  # insert wire
+           3,  # screw long bolt
+           4,  # screw short bolt
+           5]  # screw wire
 
 # feature values for each action = [physical_effort, mental_effort]
-features = [[3.6, 2.6],  # insert main wing
-            [2.4, 2.2],  # insert tail wing
-            [1.8, 1.6],  # insert right wing tip
-            [1.8, 1.6],  # insert left wing tip
-            [1.6, 2.0],  # insert long bolt into main wing
-            [1.4, 1.4],  # insert long bolt into tail wing
-            [2.8, 1.8],  # screw long bolt into main wing
-            [2.0, 1.8],  # screw long bolt into tail wing
-            [3.8, 2.6],  # screw propeller
-            [2.2, 1.6],  # screw propeller base
-            [2.2, 2.4]]  # screw propeller cap
+features = [[2.0, 2.0],  # insert long bolt
+            [2.0, 2.0],  # insert short bolt
+            [5.0, 5.0],  # insert wire
+            [6.0, 1.0],  # screw long bolt
+            [4.0, 1.0],  # screw short bolt
+            [1.0, 1.0]]  # screw wire
 
 features = np.array(features)
 # features = (features - np.min(features))/(np.max(features) - np.min(features))
 
 # start state of the assembly task (none of the actions have been performed)
-s_start = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+s_start = [0, 0, 0, 0, 0, 0]
 
 # terminal state of the assembly (each action has been performed)
-s_end = [1, 1, 1, 1, 4, 2, 4, 2, 4, 1, 1]
+s_end = [1, 1, 1, 1, 1, 1]
 
 # list of all states
 all_states = []
 
 # user demonstration (action sequence)
-demos = [[8, 8, 8, 8, 0, 1, 2, 3, 5, 5, 4, 4, 4, 4, 6, 6, 6, 6, 7, 7, 9, 10]]
+demos = [[2, 5, 1, 0, 3, 4]]
 
 
 # -------------------------------------------------- Functions ----------------------------------------------------- #
@@ -75,32 +41,23 @@ demos = [[8, 8, 8, 8, 0, 1, 2, 3, 5, 5, 4, 4, 4, 4, 6, 6, 6, 6, 7, 7, 9, 10]]
 
 def transition(s_from, a):
     # preconditions
-    if a in [0, 1, 2, 3] and s_from[a] < 1:
-        p = 1.0
-    elif a == 4 and s_from[a] < 4 and s_from[0] == 1:
-        p = 1.0
-    elif a == 5 and s_from[a] < 2 and s_from[1] == 1:
-        p = 1.0
-    elif a == 6 and s_from[a] < 4 and s_from[a] + 1 <= s_from[a - 2]:
-        p = 1.0
-    elif a == 7 and s_from[a] < 2 and s_from[a] + 1 <= s_from[a - 2]:
-        p = 1.0
-    elif a == 8 and s_from[a] < 4:
-        p = 1.0
-    elif a == 9 and s_from[a] < 1 and s_from[a - 1] == 4:
-        p = 1.0
-    elif a == 10 and s_from[a] < 1 and s_from[a - 1]:
-        p = 1.0
+    if s_from[a] < 1:
+        if a in [0, 1, 2]:
+            prob = 1.0
+        elif a in [3, 4, 5] and s_from[a-3] == 1:
+            prob = 1.0
+        else:
+            prob = 0.0
     else:
-        p = 0.0
+        prob = 0.0
 
     # transition to next state
-    if p == 1.0:
+    if prob == 1.0:
         s_to = deepcopy(s_from)
         s_to[a] += 1
-        return p, s_to
+        return prob, s_to
     else:
-        return p, None
+        return prob, None
 
 
 def feature_vector(state):
@@ -163,15 +120,7 @@ def p_transition(s_idx, sp_idx, a):
 def back_transition(s_to, a):
     # preconditions
     if s_to[a] > 0:
-        if a == 0 and s_to[4] < 1:
-            p = 1.0
-        elif a == 1 and s_to[5] < 1:
-            p = 1.0
-        elif a in [4, 5] and s_to[a] > s_to[a+2]:
-            p = 1.0
-        elif a in [8, 9] and s_to[a+1] < 1:
-            p = 1.0
-        elif a in [2, 3, 6, 7, 10]:
+        if a in [0, 1, 2] and s_to[a+3] < 1:
             p = 1.0
         else:
             p = 0.0
@@ -324,7 +273,8 @@ optim = O.ExpSga(lr=O.linear_decay(lr0=0.2))
 
 # actually do some inverse reinforcement learning
 reward_maxent, weights = maxent_irl(len(actions), state_features, terminal_idx, trajectories, optim, init)
-print("Weights have been learned for the complex task! Hopefully ...")
+print("Weights have been learned for the canonical task! Hopefully ...")
+
 
 # ------------------------------------------ Testing: Reproduce demo ------------------------------------------------ #
 
