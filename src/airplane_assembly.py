@@ -16,12 +16,12 @@ init = O.Constant(1.0)
 optim = O.ExpSga(lr=O.linear_decay(lr0=0.2))
 
 
-# ------------------------------------------------- Complex Task ---------------------------------------------------- #
+# --------------------------------------------- Full Complex Task --------------------------------------------------- #
 
 
-class ComplexTask:
+class FullComplexTask:
     """
-    Complex task parameters.
+    Full airplane assembly task parameters.
     """
 
     def __init__(self):
@@ -190,6 +190,98 @@ class CanonicalTask:
             return p, None
 
 
+# ----------------------------------------------- Complex Task ----------------------------------------------------- #
+
+
+class ComplexTask:
+    """
+    Complex task parameters.
+    """
+
+    def __init__(self):
+        # actions that can be taken in the complex task
+        self.actions = [0,  # insert main wing
+                        1,  # insert tail wing
+                        2,  # insert long bolt into main wing
+                        3,  # insert long bolt into tail wing
+                        4,  # screw long bolt into main wing
+                        5,  # screw long bolt into tail wing
+                        6,  # screw propeller
+                        7]  # screw propeller base
+
+        # feature values for each action = [physical_effort, mental_effort]
+        self.min_value, self.max_value = 1.0, 7.0  # rating are on 1-7 Likert scale
+        features = [[3.6, 2.6],  # insert main wing
+                    [2.4, 2.2],  # insert tail wing
+                    [1.6, 2.0],  # insert long bolt into main wing
+                    [1.4, 1.4],  # insert long bolt into tail wing
+                    [2.8, 1.8],  # screw long bolt into main wing
+                    [2.0, 1.8],  # screw long bolt into tail wing
+                    [3.8, 2.6],  # screw propeller
+                    [2.2, 1.6]]  # screw propeller base
+
+        self.features = (np.array(features) - self.min_value) / (self.max_value - self.min_value)
+
+        # start state of the assembly task (none of the actions have been performed)
+        self.s_start = [0, 0, 0, 0, 0, 0, 0, 0]
+
+        # terminal state of the assembly (each action has been performed)
+        self.s_end = [1, 1, 4, 2, 4, 2, 4, 1]
+
+    def transition(self, s_from, a):
+        # preconditions
+        if a in [0, 1] and s_from[a] < 1:
+            p = 1.0
+        elif a == 2 and s_from[a] < 4 and s_from[0] == 1:
+            p = 1.0
+        elif a == 3 and s_from[a] < 2 and s_from[1] == 1:
+            p = 1.0
+        elif a == 4 and s_from[a] < 4 and s_from[a] + 1 <= s_from[a - 2]:
+            p = 1.0
+        elif a == 5 and s_from[a] < 2 and s_from[a] + 1 <= s_from[a - 2]:
+            p = 1.0
+        elif a == 6 and s_from[a] < 4:
+            p = 1.0
+        elif a == 7 and s_from[a] < 1 and s_from[a - 1] == 4:
+            p = 1.0
+        else:
+            p = 0.0
+
+        # transition to next state
+        if p == 1.0:
+            s_to = deepcopy(s_from)
+            s_to[a] += 1
+            return p, s_to
+        else:
+            return p, None
+
+    def back_transition(self, s_to, a):
+        # preconditions
+        if s_to[a] > 0:
+            if a == 0 and s_to[2] < 1:
+                p = 1.0
+            elif a == 1 and s_to[3] < 1:
+                p = 1.0
+            elif a in [2, 3] and s_to[a] > s_to[a + 2]:
+                p = 1.0
+            elif a in [6] and s_to[a + 1] < 1:
+                p = 1.0
+            elif a in [4, 5, 7]:
+                p = 1.0
+            else:
+                p = 0.0
+        else:
+            p = 0.0
+
+        # transition to next state
+        if p == 1.0:
+            s_from = deepcopy(s_to)
+            s_from[a] -= 1
+            return p, s_from
+        else:
+            return p, None
+
+
 # ----------------------------------------- Training: Learn weights ------------------------------------------------- #
 
 # initialize canonical task
@@ -270,7 +362,7 @@ terminal_idx = [len(complex_states) - 1]
 state_features = np.array([feature_vector(state, complex_task.features) for state in complex_states])
 
 # demonstrations
-complex_demo = [[8, 8, 8, 8, 0, 1, 2, 3, 5, 5, 4, 4, 4, 4, 6, 6, 6, 6, 7, 7, 9, 10]]
+complex_demo = [[6, 6, 6, 6, 0, 1, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 5, 5, 7]]
 demo_trajectories = get_trajectories(complex_states, complex_demo, complex_task.transition)
 
 # transfer rewards to complex task
