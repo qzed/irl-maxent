@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="782e42c7-c677-44ca-87a1-0222e22348fa" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/airplane_assembly_loop.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/airplane_assembly_loop.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/airplane_assembly_loop.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -182,6 +183,7 @@
       <workItem from="1627611062527" duration="594000" />
       <workItem from="1627671519248" duration="167000" />
       <workItem from="1628026463714" duration="5074000" />
+      <workItem from="1628032521866" duration="289000" />
     </task>
     <servers />
   </component>
@@ -202,7 +204,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/irl_maxent$transfer.coverage" NAME="transfer Coverage Results" MODIFIED="1627416515915" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/transform" />
-    <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly_loop.coverage" NAME="airplane_assembly_loop Coverage Results" MODIFIED="1628032297890" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly_loop.coverage" NAME="airplane_assembly_loop Coverage Results" MODIFIED="1628032747792" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/irl_maxent$canonical_features.coverage" NAME="canonical_features Coverage Results" MODIFIED="1627343783538" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/transform" />
     <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly.coverage" NAME="airplane_assembly Coverage Results" MODIFIED="1627428653109" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly_uniquefeatures.coverage" NAME="airplane_assembly_uniquefeatures Coverage Results" MODIFIED="1627596960711" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gry" />

@@ -304,7 +304,7 @@ for i in range(0,len(canonical_data)):
     abstract_features = np.array([feature_vector(state, canonical_task.features) for state in canonical_states])
 
     # demonstrations
-    canonical_demo = [[1, 0, 4, 3, 2, 5]]
+    canonical_demo = [canonical_data[i]]
     demo_trajectories = get_trajectories(canonical_states, canonical_demo, canonical_task.transition)
 
     print("Training ...")
@@ -365,7 +365,7 @@ for i in range(0,len(canonical_data)):
     state_features = np.array([feature_vector(state, complex_task.features) for state in complex_states])
 
     # demonstrations
-    complex_demo = [[6, 6, 6, 6, 0, 1, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 5, 5, 7]]
+    complex_demo = [complex_data[i]]
     demo_trajectories = get_trajectories(complex_states, complex_demo, complex_task.transition)
 
     # transfer rewards to complex task
