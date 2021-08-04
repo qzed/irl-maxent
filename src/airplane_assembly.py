@@ -281,6 +281,58 @@ class ComplexTask:
         else:
             return p, None
 
+    def transition(self, s_from, a):
+        # preconditions
+        if a in [0, 1] and s_from[a] < 1:
+            p = 1.0
+        elif a == 2 and s_from[a] < 4 and s_from[0] == 1:
+            p = 1.0
+        elif a == 3 and s_from[a] < 2 and s_from[1] == 1:
+            p = 1.0
+        elif a == 4 and s_from[a] < 4 and s_from[a] + 1 <= s_from[a - 2]:
+            p = 1.0
+        elif a == 5 and s_from[a] < 2 and s_from[a] + 1 <= s_from[a - 2]:
+            p = 1.0
+        elif a == 6 and s_from[a] < 4:
+            p = 1.0
+        elif a == 7 and s_from[a] < 1 and s_from[a - 1] == 4:
+            p = 1.0
+        else:
+            p = 0.0
+
+        # transition to next state
+        if p == 1.0:
+            s_to = deepcopy(s_from)
+            s_to[a] += 1
+            return p, s_to
+        else:
+            return p, None
+
+    def back_transition(self, s_to, a):
+        # preconditions
+        if s_to[a] > 0:
+            if a == 0 and s_to[2] < 1:
+                p = 1.0
+            elif a == 1 and s_to[3] < 1:
+                p = 1.0
+            elif a in [2, 3] and s_to[a] > s_to[a + 2]:
+                p = 1.0
+            elif a in [6] and s_to[a + 1] < 1:
+                p = 1.0
+            elif a in [4, 5, 7]:
+                p = 1.0
+            else:
+                p = 0.0
+        else:
+            p = 0.0
+
+        # transition to next state
+        if p == 1.0:
+            s_from = deepcopy(s_to)
+            s_from[a] -= 1
+            return p, s_from
+        else:
+            return p, None
 
 # ----------------------------------------- Training: Learn weights ------------------------------------------------- #
 

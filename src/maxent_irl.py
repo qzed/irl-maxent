@@ -174,3 +174,36 @@ def rollout_trajectory(qf, states, demos, transition_function):
         available_actions.remove(take_action)
 
     return generated_sequence
+
+
+def predict_trajectory(qf, states, demos, transition_function):
+
+    demo = demos[0]
+    s, available_actions = 0, demo.copy()
+
+    generated_sequence, score = [], []
+    for take_action in demo:
+        max_action_val = -np.inf
+        candidates = []
+        for a in available_actions:
+            p, sp = transition_function(states[s], a)
+            if sp:
+                if qf[s][a] > max_action_val:
+                    candidates = [a]
+                    max_action_val = qf[s][a]
+                elif qf[s][a] == max_action_val:
+                    candidates.append(a)
+                    max_action_val = qf[s][a]
+
+        if not candidates:
+            print(s)
+
+        predict_action = np.random.choice(candidates)
+        score.append(predict_action == take_action)
+
+        generated_sequence.append(take_action)
+        p, sp = transition_function(states[s], take_action)
+        s = states.index(sp)
+        available_actions.remove(take_action)
+
+    return generated_sequence, score
