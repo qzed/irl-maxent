@@ -2,8 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="782e42c7-c677-44ca-87a1-0222e22348fa" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/airplane_assembly_more_features.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/airplane_assembly_loop.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/airplane_assembly_loop.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/match_short.csv" beforeDir="false" afterPath="$PROJECT_DIR$/src/match_short.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/predict_short.csv" beforeDir="false" afterPath="$PROJECT_DIR$/src/predict_short.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/trajectory_matching_fixed.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/src/trajectory_matching_fixed.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/trajectory_prediction_fixed.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/src/trajectory_prediction_fixed.jpg" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,7 +43,7 @@
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.airplane_assembly_loop">
+  <component name="RunManager" selected="Python.airplane_assembly_more_features">
     <configuration name="airplane_assembly" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="irl-maxent" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -84,6 +88,28 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="airplane_assembly_more_features" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="irl-maxent" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/airplane_assembly_more_features.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="airplane_assembly_uniquefeatures" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="irl-maxent" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -98,28 +124,6 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/gry/airplane_assembly_uniquefeatures.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="canonical_features" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="irl-maxent" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/transform" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/transform/canonical_features.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -152,11 +156,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.airplane_assembly_more_features" />
         <item itemvalue="Python.airplane_assembly_loop" />
         <item itemvalue="Python.airplane_assembly_uniquefeatures" />
         <item itemvalue="Python.airplane_assembly" />
         <item itemvalue="Python.transfer" />
-        <item itemvalue="Python.canonical_features" />
       </list>
     </recent_temporary>
   </component>
@@ -183,7 +187,9 @@
       <workItem from="1627611062527" duration="594000" />
       <workItem from="1627671519248" duration="167000" />
       <workItem from="1628026463714" duration="5074000" />
-      <workItem from="1628032521866" duration="289000" />
+      <workItem from="1628032521866" duration="383000" />
+      <workItem from="1628286386016" duration="81000" />
+      <workItem from="1628292383908" duration="2513000" />
     </task>
     <servers />
   </component>
@@ -208,6 +214,7 @@
     <SUITE FILE_PATH="coverage/irl_maxent$canonical_features.coverage" NAME="canonical_features Coverage Results" MODIFIED="1627343783538" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/transform" />
     <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly.coverage" NAME="airplane_assembly Coverage Results" MODIFIED="1627428653109" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly_uniquefeatures.coverage" NAME="airplane_assembly_uniquefeatures Coverage Results" MODIFIED="1627596960711" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gry" />
+    <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly_more_features.coverage" NAME="airplane_assembly_more_features Coverage Results" MODIFIED="1628296397439" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/irl_maxent$canonical_assembly.coverage" NAME="canonical_assembly Coverage Results" MODIFIED="1627342562353" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
   </component>
 </project>
