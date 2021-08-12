@@ -57,8 +57,9 @@ def load_features(data, feature_idx, action_idx):
 
 
 # user ratings for features
-canonical_features = load_features(ratings_df, ["Q7_", "Q8_"], [1, 3, 5, 2, 4, 6])
-complex_features = load_features(ratings_df, ["Q14_", "Q15_"], [1, 3, 7, 8, 2, 4, 5, 6])
+canonical_q, complex_q = ["Q7_", "Q8_"], ["Q14_", "Q15_"]  # ["Q6_", "Q7_", "Q8_"], ["Q13_", "Q14_", "Q15_"]
+canonical_features = load_features(ratings_df, canonical_q, [1, 3, 5, 2, 4, 6])
+complex_features = load_features(ratings_df, complex_q, [1, 3, 7, 8, 2, 4, 5, 6])
 
 # ------------------------------------------------- Optimization ---------------------------------------------------- #
 
@@ -156,7 +157,7 @@ for i in range(len(canonical_demos)):
     complex_states = enumerate_states(complex_task.s_start, complex_task.actions, complex_task.transition)
 
     # index of the terminal state
-    terminal_idx = [complex_states.index(s_terminal) for s_terminal in complex_task.s_end]
+    complex_terminal_idx = [complex_states.index(s_terminal) for s_terminal in complex_task.s_end]
 
     # features for each state
     complex_state_features = np.array(complex_states)/np.max(complex_states)
@@ -173,21 +174,29 @@ for i in range(len(canonical_demos)):
 
     # rollout trajectory
     qf_abstract, _, _ = value_iteration(complex_states, complex_task.actions, complex_task.transition,
-                                        transfer_rewards_abstract, terminal_idx)
+                                        transfer_rewards_abstract, complex_terminal_idx)
     rolled_sequence_abstract = rollout_trajectory(qf_abstract, complex_states, complex_user_demo,
                                                   complex_task.transition)
 
-    # complex_rewards_true, complex_weights_true = maxent_irl(complex_states,
-    #                                                         actions,
-    #                                                         complex_task.transition,
-    #                                                         complex_task.back_transition,
-    #                                                         state_features,
-    #                                                         terminal_idx,
-    #                                                         demo_trajectories,
-    #                                                         optim, init)
-    # qf_true, _, _ = value_iteration(complex_states, actions, complex_task.transition,
-    #                                 complex_rewards_true, terminal_idx)
-    # predicted_sequence_true = rollout_trajectory(qf_true, complex_states, complex_demo, complex_task.transition)
+    # using true features
+    complex_rewards_true, complex_weights_true = maxent_irl(complex_states,
+                                                            complex_task.actions,
+                                                            complex_task.transition,
+                                                            complex_task.prev_states,
+                                                            complex_state_features,
+                                                            complex_terminal_idx,
+                                                            complex_trajectories,
+                                                            optim, init)
+
+    # using abstract features
+    complex_rewards_abstract, complex_weights_abstract = maxent_irl(complex_states,
+                                                                    complex_task.actions,
+                                                                    complex_task.transition,
+                                                                    complex_task.prev_states,
+                                                                    complex_abstract_features,
+                                                                    complex_terminal_idx,
+                                                                    complex_trajectories,
+                                                                    optim, init)
 
     print("\n")
     print("Complex task:")
