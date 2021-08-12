@@ -209,10 +209,10 @@ for i in range(len(canonical_demos)):
 
 # ---------------------------------------------------- Results ------------------------------------------------------ #
 random_accuracy = np.sum(random_scores, axis=0)/len(random_scores)
-np.savetxt("random_new.csv", random_accuracy)
+np.savetxt("results/random.csv", random_accuracy)
 
 match_accuracy = np.sum(match_scores, axis=0)/len(match_scores)
-np.savetxt("match_new.csv", match_accuracy)
+np.savetxt("results/match.csv", match_accuracy)
 
 predict_accuracy = np.sum(predict_scores, axis=0)/len(predict_scores)
-np.savetxt("predict_new.csv", predict_accuracy)
+np.savetxt("results/predict.csv", predict_accuracy)
