@@ -18,16 +18,11 @@ def enumerate_states(start_state, list_of_actions, transition_function):
     return states
 
 
-def feature_vector(state, terminal_state, action_features):
-    max_phase = sum(terminal_state[:-1])
-    phase = sum(state[:-1]) / max_phase
-    e_p, e_m = action_features[state[-1]]
-    feature_value = np.array([phase * e_p, phase * e_m, (1 - phase) * e_p, (1 - phase) * e_m])
-
-    # n_actions, n_features = np.array(action_features).shape
-    # feature_value = np.zeros(n_features)
-    # for action, executed in enumerate(state):
-    #     feature_value += executed * np.array(action_features[action])
+def feature_vector(state, action_features):
+    n_actions, n_features = np.array(action_features).shape
+    feature_value = np.zeros(n_features)
+    for action, executed in enumerate(state):
+        feature_value += executed * np.array(action_features[action])
 
     return feature_value
 
@@ -68,7 +63,7 @@ def initial_probabilities_from_trajectories(states, trajectories):
     return prob / len(trajectories)  # normalize
 
 
-def compute_expected_svf(states, terminal, actions, transition_function, prev_states_function,
+def compute_expected_svf(states, terminal, actions, transition_function, back_transition_function,
                          p_initial, reward, max_iters, eps=1e-5):
     n_states, n_actions = len(states), len(actions)
 
@@ -102,20 +97,18 @@ def compute_expected_svf(states, terminal, actions, transition_function, prev_st
     # 5. iterate for N steps
     for t in range(1, max_iters):  # longest trajectory: n_states
         for sp_idx in range(n_states):
-            parents = prev_states_function(states[sp_idx])
-            if parents:
-                for s in parents:
+            for a in actions:
+                prob, s = back_transition_function(states[sp_idx], a)
+                if s:
                     s_idx = states.index(s)
-                    a = states[sp_idx][-1]
                     d[sp_idx, t] += d[s_idx, t - 1] * p_action[s_idx, a]
 
     # 6. sum-up frequencies
     return d.sum(axis=1)
 
 
-def maxent_irl(states, actions, transition_function, prev_states_function,
+def maxent_irl(states, actions, transition_function, back_transition_function,
                s_features, terminal, trajectories, optim, init, eps=1e-3):
-
     # number of actions and features
     n_states, n_features = s_features.shape
 
@@ -140,7 +133,7 @@ def maxent_irl(states, actions, transition_function, prev_states_function,
         reward = s_features.dot(omega)
 
         # compute gradient of the log-likelihood
-        e_svf = compute_expected_svf(states, terminal, actions, transition_function, prev_states_function,
+        e_svf = compute_expected_svf(states, terminal, actions, transition_function, back_transition_function,
                                      p_initial, reward, demo_length)
         grad = e_features - s_features.T.dot(e_svf)
 
@@ -201,33 +194,6 @@ def predict_trajectory(qf, states, demos, transition_function):
                 elif qf[s][a] == max_action_val:
                     candidates.append(a)
                     max_action_val = qf[s][a]
-
-        if not candidates:
-            print(s)
-
-        predict_action = np.random.choice(candidates)
-        score.append(predict_action == take_action)
-
-        generated_sequence.append(take_action)
-        p, sp = transition_function(states[s], take_action)
-        s = states.index(sp)
-        available_actions.remove(take_action)
-
-    return generated_sequence, score
-
-
-def random_trajectory(states, demos, transition_function):
-
-    demo = demos[0]
-    s, available_actions = 0, demo.copy()
-
-    generated_sequence, score = [], []
-    for take_action in demo:
-        candidates = []
-        for a in available_actions:
-            p, sp = transition_function(states[s], a)
-            if sp:
-                candidates.append(a)
 
         if not candidates:
             print(s)

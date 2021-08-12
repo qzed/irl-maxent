@@ -1,202 +1,254 @@
 import numpy as np
-from itertools import product               # Cartesian product for iterators
-import optimizer as O                       # stochastic gradient descent optimizer
-
-# ------------------------------------------------ Canonical Task ---------------------------------------------------- #
-
-actions = [0,  # screw at location A
-           1,  # weld at location A
-           2]  # hammer at location A
-
-# # s = [screwed, welded, hammered, previous screw, previous weld, previous hammer]
-# features = [[0, 0, 0, 0, 0, 0],  # nothing done, no previous tool
-#             [1, 0, 0, 1, 0, 0],  # screwed, previous tool was screw
-#             [0, 1, 0, 0, 1, 0],  # welded, previous tool was weld
-#             [0, 0, 1, 0, 0, 1],
-#             [1, 1, 0, 1, 0, 0],
-#             [1, 1, 0, 0, 1, 0],
-#             [1, 0, 1, 1, 0, 0],
-#             [1, 0, 1, 0, 0, 1],
-#             [0, 1, 1, 0, 1, 0],
-#             [0, 1, 1, 0, 0, 1],
-#             [1, 1, 1, 1, 0, 0],
-#             [1, 1, 1, 0, 1, 0],
-#             [1, 1, 1, 0, 0, 1]]
-#
-# terminal = [10, 11, 12]
-#
-# trajectories = [[(0, 0, 1), (1, 1, 5), (5, 2, 12)]]
+from copy import deepcopy
 
 
-features = [[0, 0, 0],  # nothing done, no previous tool
-            [1, 0, 0],  # screwed, previous tool was screw
-            [0, 1, 0],  # welded, previous tool was weld
-            [0, 0, 1],
-            [1, 1, 0],
-            [1, 0, 1],
-            [0, 1, 1],
-            [1, 1, 1]]
+class AssemblyTask:
 
-terminal = [7]
+    def __init__(self, features):
 
-trajectories = [[(0, 0, 1), (1, 1, 4), (4, 2, 7)]]
+        self.num_actions, self.num_features = np.shape(features)
+        self.actions = np.array(range(self.num_actions))
+        self.features = features
 
+        self.min_value, self.max_value = 1.0, 7.0  # rating are on 1-7 Likert scale
 
-def p_transition(s_from, s_to, a):
-    f_from = list(features[s_from])
-    f_from[a] = 1
-    # f_from[3:] = [0, 0, 0]
-    # f_from[3 + a] = 1
-    f_to = list(features[s_to])
-    if f_from == f_to:
-        return 1.0
-    else:
-        return 0.0
+        # start state of the assembly task (none of the actions have been performed)
+        self.s_start = [0] * self.num_actions + [-1]
 
+        self.s_end = []
 
-def feature_expectation_from_trajectories(features, trajectories):
-    n_states, n_features = features.shape
+    def scale_features(self):
+        self.features = (np.array(self.features) - self.min_value) / (self.max_value - self.min_value)
 
-    fe = np.zeros(n_features)
+    def set_end_state(self, user_demo):
+        terminal_state = list(np.bincount(user_demo))
+        for a in self.actions:
+            prob, s = self.back_transition(terminal_state, a)
+            if s:
+                self.s_end.append(terminal_state + [a])
 
-    for t in trajectories:                  # for each trajectory
-        for s, a, sp in t:                  # for each state in trajectory
-            fe += features[s, :]            # sum-up features
-        fe += features[sp, :]
+    def prev_states(self, s_to):
+        previous_states = []
 
-    return fe / len(trajectories)           # average over trajectories
+        a = s_to[-1]
+        if a >= 0:
+            s_from = deepcopy(s_to[:-1])
+            s_from[a] -= 1
+            previous_actions = [a for a, s in enumerate(s_from) if s == 1]
+            if previous_actions:
+                for prev_a in previous_actions:
+                    prob, s = self.back_transition(s_from, prev_a)
+                    if s:
+                        prev_s = deepcopy(s_from)
+                        prev_s.append(prev_a)
+                        previous_states.append(prev_s)
+            else:
+                prev_a = -1
+                prev_s = deepcopy(s_from)
+                prev_s.append(prev_a)
+                previous_states.append(prev_s)
 
-
-def initial_probabilities_from_trajectories(n_states, trajectories):
-    p = np.zeros(n_states)
-
-    for t in trajectories:                  # for each trajectory
-        p[t[0][0]] += 1.0                   # increment starting state
-
-    return p / len(trajectories)            # normalize
-
-
-def compute_expected_svf(n_states, n_actions, p_initial, terminal, reward, eps=1e-5):
-    nonterminal = set(range(n_states)) - set(terminal)  # nonterminal states
-
-    # Backward Pass
-    # 1. initialize at terminal states
-    zs = np.zeros(n_states)  # zs: state partition function
-    zs[terminal] = 1.0
-
-    # 2. perform backward pass
-    for _ in range(2 * n_states):  # longest trajectory: n_states
-        # reset action values to zero
-        za = np.zeros((n_states, n_actions))  # za: action partition function
-
-        # for each state-action pair
-        for s_from, a in product(range(n_states), range(n_actions)):
-
-            # sum over s_to
-            for s_to in range(n_states):
-                za[s_from, a] += p_transition(s_from, s_to, a) * np.exp(reward[s_from]) * zs[s_to]
-
-        # sum over all actions
-        zs = za.sum(axis=1)
-
-    # 3. compute local action probabilities
-    p_action = za / zs[:, None]
-
-    # Forward Pass
-    # 4. initialize with starting probability
-    d = np.zeros((n_states, 2 * n_states))  # d: state-visitation frequencies
-    d[:, 0] = p_initial
-
-    # 5. iterate for N steps
-    for t in range(1, 2 * n_states):  # longest trajectory: n_states
-
-        # for all states
-        for s_to in range(n_states):
-
-            # sum over nonterminal state-action pairs
-            for s_from, a in product(nonterminal, range(n_actions)):
-                d[s_to, t] += d[s_from, t - 1] * p_action[s_from, a] * p_transition(s_from, s_to, a)
-
-    # 6. sum-up frequencies
-    return d.sum(axis=1)
+        return previous_states
 
 
-def maxent_irl(actions, features, terminal, trajectories, optim, init, eps=1e-4):
-    n_actions = len(actions)
-    n_states, n_features = features.shape
+# ----------------------------------------------- Canonical Task ----------------------------------------------------- #
 
-    # compute feature expectation from trajectories
-    e_features = feature_expectation_from_trajectories(features, trajectories)
+class CanonicalTask(AssemblyTask):
+    """
+    Actions:
+    0 - insert long bolt
+    1 - insert short bolt
+    2 - insert wire
+    3 - screw long bolt
+    4 - screw short bolt
+    5 - screw wire
 
-    # compute starting-state probabilities from trajectories
-    p_initial = initial_probabilities_from_trajectories(n_states, trajectories)
+    feature values for each action = [physical_effort, mental_effort]
+    features = [[1.2, 1.1],  # insert long bolt
+                [1.1, 1.1],  # insert short bolt
+                [4.0, 6.0],  # insert wire
+                [6.0, 2.0],  # screw long bolt
+                [2.0, 2.0],  # screw short bolt
+                [1.1, 2.0]]  # screw wire
+    """
 
-    # gradient descent optimization
-    omega = init(n_features)  # initialize our parameters
-    delta = np.inf  # initialize delta for convergence check
+    @staticmethod
+    def transition(s_from, a):
+        # preconditions
+        if s_from[a] < 1:
+            if a in [0, 1, 2]:
+                prob = 1.0
+            elif a in [3, 4, 5] and s_from[a - 3] == 1:
+                prob = 1.0
+            else:
+                prob = 0.0
+        else:
+            prob = 0.0
 
-    optim.reset(omega)  # re-start optimizer
-    while delta > eps:  # iterate until convergence
-        omega_old = omega.copy()
+        # transition to next state
+        if prob == 1.0:
+            s_to = deepcopy(s_from)
+            s_to[a] += 1
+            s_to[-1] = a
+            return prob, s_to
+        else:
+            return prob, None
 
-        # compute per-state reward from features
-        reward = features.dot(omega)
+    @staticmethod
+    def back_transition(s_to, a):
+        # preconditions
+        if s_to[a] > 0:
+            if a in [0, 1, 2] and s_to[a + 3] < 1:
+                p = 1.0
+            elif a in [3, 4, 5]:
+                p = 1.0
+            else:
+                p = 0.0
+        else:
+            p = 0.0
 
-        # compute gradient of the log-likelihood
-        e_svf = compute_expected_svf(n_states, n_actions, p_initial, terminal, reward)
-        grad = e_features - features.T.dot(e_svf)
-
-        # perform optimization step and compute delta for convergence
-        optim.step(grad)
-
-        # re-compute detla for convergence check
-        delta = np.max(np.abs(omega_old - omega))
-
-    # re-compute per-state reward and return
-    return features.dot(omega), omega
+        # transition to next state
+        if p == 1.0:
+            s_from = deepcopy(s_to)
+            s_from[a] -= 1
+            return p, s_from
+        else:
+            return p, None
 
 
-# set up features: we use one feature vector per state
-features = np.array(features)
+# ------------------------------------------------ Complex Task ----------------------------------------------------- #
 
-# choose our parameter initialization strategy:
-# initialize parameters with constant
-init = O.Constant(1.0)
+class ComplexTask(AssemblyTask):
+    """
+    Actions:
+    0 - insert main wing
+    1 - insert tail wing
+    2 - insert long bolt into main wing
+    3 - insert long bolt into tail wing
+    4 - screw long bolt into main wing
+    5 - screw long bolt into tail wing
+    6 - screw propeller
+    7 - screw propeller base
 
-# choose our optimization strategy:
-#   we select exponentiated stochastic gradient descent with linear learning-rate decay
-optim = O.ExpSga(lr=O.linear_decay(lr0=0.2))
+    features = [[3.5, 3.5],  # insert main wing
+                [2.0, 3.0],  # insert tail wing
+                [1.2, 1.1],  # insert long bolt into main wing
+                [1.1, 1.1],  # insert long bolt into tail wing
+                [2.1, 2.1],  # screw long bolt into main wing
+                [2.0, 2.0],  # screw long bolt into tail wing
+                [3.5, 6.0],  # screw propeller
+                [2.0, 3.5]]  # screw propeller base
+    """
 
-# actually do some inverse reinforcement learning
-reward_maxent, weights = maxent_irl(actions, features, terminal, trajectories, optim, init)
-print("Canonical Task Done")
+    @staticmethod
+    def transition(s_from, a):
+        # preconditions
+        if a in [0, 1] and s_from[a] < 1:
+            p = 1.0
+        elif a == 2 and s_from[a] < 4 and s_from[0] == 1:
+            p = 1.0
+        elif a == 3 and s_from[a] < 2 and s_from[1] == 1:
+            p = 1.0
+        elif a == 4 and s_from[a] < 4 and s_from[a] + 1 <= s_from[a - 2]:
+            p = 1.0
+        elif a == 5 and s_from[a] < 2 and s_from[a] + 1 <= s_from[a - 2]:
+            p = 1.0
+        elif a == 6 and s_from[a] < 4:
+            p = 1.0
+        elif a == 7 and s_from[a] < 1 and s_from[a - 1] == 4:
+            p = 1.0
+        else:
+            p = 0.0
 
-# -------------------------------------------------- Actual Task ----------------------------------------------------- #
-actions = [0,  # screw at location A
-           1,  # screw at location A
-           2,  # weld at location A
-           3,  # hammer at location A
-           4]  # hammer at location A
+        # transition to next state
+        if p == 1.0:
+            s_to = deepcopy(s_from)
+            s_to[a] += 1
+            s_to[-1] = a
+            return p, s_to
+        else:
+            return p, None
 
-features = [[0, 0, 0],
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-            [2, 0, 0],
-            [1, 1, 0],
-            [1, 0, 1],
-            [0, 1, 1],
-            [0, 0, 2],
-            [2, 1, 0],
-            [2, 0, 1],
-            [1, 1, 1],
-            [1, 0, 2],
-            [0, 1, 2],
-            [2, 1, 1],
-            [2, 0, 2],
-            [1, 1, 2],
-            [2, 1, 2]]
-features = np.array(features)
+    @staticmethod
+    def back_transition(s_to, a):
+        # preconditions
+        if s_to[a] > 0:
+            if a == 0 and s_to[2] < 1:
+                p = 1.0
+            elif a == 1 and s_to[3] < 1:
+                p = 1.0
+            elif a in [2, 3] and s_to[a] > s_to[a + 2]:
+                p = 1.0
+            elif a in [6] and s_to[a + 1] < 1:
+                p = 1.0
+            elif a in [4, 5, 7]:
+                p = 1.0
+            else:
+                p = 0.0
+        else:
+            p = 0.0
 
-rewards = features.dot(weights)
-print("Actual Task Done")
+        # transition to next state
+        if p == 1.0:
+            s_from = deepcopy(s_to)
+            s_from[a] -= 1
+            return p, s_from
+        else:
+            return p, None
+
+    # ----------------------------------------------- Event sequence ------------------------------------------------ #
+    # @staticmethod
+    # def transition(self, s_from, a):
+    #     # preconditions
+    #     if a in [0, 1] and s_from[a] < 1:
+    #         p = 1.0
+    #     elif a == 2 and s_from[a] < 1 and s_from[0] == 1:
+    #         p = 1.0
+    #     elif a == 3 and s_from[a] < 1 and s_from[1] == 1:
+    #         p = 1.0
+    #     elif a == 4 and s_from[a] < 1 and s_from[a] + 1 <= s_from[a - 2]:
+    #         p = 1.0
+    #     elif a == 5 and s_from[a] < 1 and s_from[a] + 1 <= s_from[a - 2]:
+    #         p = 1.0
+    #     elif a == 6 and s_from[a] < 1:
+    #         p = 1.0
+    #     elif a == 7 and s_from[a] < 1 and s_from[a - 1] == 1:
+    #         p = 1.0
+    #     else:
+    #         p = 0.0
+    #
+    #     # transition to next state
+    #     if p == 1.0:
+    #         s_to = deepcopy(s_from)
+    #         s_to[a] += 1
+    #         s_to[-1] = a
+    #         return p, s_to
+    #     else:
+    #         return p, None
+    #
+    # @staticmethod
+    # def back_transition(self, s_to, a):
+    #     # preconditions
+    #     if s_to[a] > 0:
+    #         if a == 0 and s_to[2] < 1:
+    #             p = 1.0
+    #         elif a == 1 and s_to[3] < 1:
+    #             p = 1.0
+    #         elif a in [2, 3] and s_to[a] > s_to[a + 2]:
+    #             p = 1.0
+    #         elif a in [6] and s_to[a + 1] < 1:
+    #             p = 1.0
+    #         elif a in [4, 5, 7]:
+    #             p = 1.0
+    #         else:
+    #             p = 0.0
+    #     else:
+    #         p = 0.0
+    #
+    #     # transition to next state
+    #     if p == 1.0:
+    #         s_from = deepcopy(s_to)
+    #         s_from[a] -= 1
+    #         return p, s_from
+    #     else:
+    #         return p, None

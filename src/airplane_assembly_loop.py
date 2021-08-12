@@ -1,18 +1,19 @@
+# import python libraries
 import numpy as np
+from copy import deepcopy
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from copy import deepcopy
-from itertools import product  # Cartesian product for iterators
-import edit_distance
+# import functions
 import optimizer as O  # stochastic gradient descent optimizer
 from vi import value_iteration
-from maxent_irl import *
+from maxent_irl_old import *
 
+# paths
 root_path = "data/"
 canonical_path = root_path + "canonical_demos.csv"
-complex_path = root_path + "complex_demos.csv"
+complex_path = root_path + "complex_demos_short.csv"
 feature_path = root_path + "survey_data.csv"
 
 ca_df = pd.read_csv(canonical_path, header=None)
@@ -225,74 +226,21 @@ class ComplexTask:
         # self.s_end = [1, 1, 4, 2, 4, 2, 4, 1]
         self.s_end = [1, 1, 1, 1, 1, 1, 1, 1]
 
-    # def transition(self, s_from, a):
-    #     # preconditions
-    #     if a in [0, 1] and s_from[a] < 1:
-    #         p = 1.0
-    #     elif a == 2 and s_from[a] < 1 and s_from[0] == 1:
-    #         p = 1.0
-    #     elif a == 3 and s_from[a] < 1 and s_from[1] == 1:
-    #         p = 1.0
-    #     elif a == 4 and s_from[a] < 1 and s_from[a] + 1 <= s_from[a - 2]:
-    #         p = 1.0
-    #     elif a == 5 and s_from[a] < 1 and s_from[a] + 1 <= s_from[a - 2]:
-    #         p = 1.0
-    #     elif a == 6 and s_from[a] < 1:
-    #         p = 1.0
-    #     elif a == 7 and s_from[a] < 1 and s_from[a - 1] == 1:
-    #         p = 1.0
-    #     else:
-    #         p = 0.0
-    #
-    #     # transition to next state
-    #     if p == 1.0:
-    #         s_to = deepcopy(s_from)
-    #         s_to[a] += 1
-    #         return p, s_to
-    #     else:
-    #         return p, None
-    #
-    # def back_transition(self, s_to, a):
-    #     # preconditions
-    #     if s_to[a] > 0:
-    #         if a == 0 and s_to[2] < 1:
-    #             p = 1.0
-    #         elif a == 1 and s_to[3] < 1:
-    #             p = 1.0
-    #         elif a in [2, 3] and s_to[a] > s_to[a + 2]:
-    #             p = 1.0
-    #         elif a in [6] and s_to[a + 1] < 1:
-    #             p = 1.0
-    #         elif a in [4, 5, 7]:
-    #             p = 1.0
-    #         else:
-    #             p = 0.0
-    #     else:
-    #         p = 0.0
-    #
-    #     # transition to next state
-    #     if p == 1.0:
-    #         s_from = deepcopy(s_to)
-    #         s_from[a] -= 1
-    #         return p, s_from
-    #     else:
-    #         return p, None
-
     def transition(self, s_from, a):
         # preconditions
         if a in [0, 1] and s_from[a] < 1:
             p = 1.0
-        elif a == 2 and s_from[a] < 4 and s_from[0] == 1:
+        elif a == 2 and s_from[a] < 1 and s_from[0] == 1:
             p = 1.0
-        elif a == 3 and s_from[a] < 2 and s_from[1] == 1:
+        elif a == 3 and s_from[a] < 1 and s_from[1] == 1:
             p = 1.0
-        elif a == 4 and s_from[a] < 4 and s_from[a] + 1 <= s_from[a - 2]:
+        elif a == 4 and s_from[a] < 1 and s_from[a] + 1 <= s_from[a - 2]:
             p = 1.0
-        elif a == 5 and s_from[a] < 2 and s_from[a] + 1 <= s_from[a - 2]:
+        elif a == 5 and s_from[a] < 1 and s_from[a] + 1 <= s_from[a - 2]:
             p = 1.0
-        elif a == 6 and s_from[a] < 4:
+        elif a == 6 and s_from[a] < 1:
             p = 1.0
-        elif a == 7 and s_from[a] < 1 and s_from[a - 1] == 4:
+        elif a == 7 and s_from[a] < 1 and s_from[a - 1] == 1:
             p = 1.0
         else:
             p = 0.0
@@ -330,6 +278,59 @@ class ComplexTask:
             return p, s_from
         else:
             return p, None
+
+    # def transition(self, s_from, a):
+    #     # preconditions
+    #     if a in [0, 1] and s_from[a] < 1:
+    #         p = 1.0
+    #     elif a == 2 and s_from[a] < 4 and s_from[0] == 1:
+    #         p = 1.0
+    #     elif a == 3 and s_from[a] < 2 and s_from[1] == 1:
+    #         p = 1.0
+    #     elif a == 4 and s_from[a] < 4 and s_from[a] + 1 <= s_from[a - 2]:
+    #         p = 1.0
+    #     elif a == 5 and s_from[a] < 2 and s_from[a] + 1 <= s_from[a - 2]:
+    #         p = 1.0
+    #     elif a == 6 and s_from[a] < 4:
+    #         p = 1.0
+    #     elif a == 7 and s_from[a] < 1 and s_from[a - 1] == 4:
+    #         p = 1.0
+    #     else:
+    #         p = 0.0
+    #
+    #     # transition to next state
+    #     if p == 1.0:
+    #         s_to = deepcopy(s_from)
+    #         s_to[a] += 1
+    #         return p, s_to
+    #     else:
+    #         return p, None
+    #
+    # def back_transition(self, s_to, a):
+    #     # preconditions
+    #     if s_to[a] > 0:
+    #         if a == 0 and s_to[2] < 1:
+    #             p = 1.0
+    #         elif a == 1 and s_to[3] < 1:
+    #             p = 1.0
+    #         elif a in [2, 3] and s_to[a] > s_to[a + 2]:
+    #             p = 1.0
+    #         elif a in [6] and s_to[a + 1] < 1:
+    #             p = 1.0
+    #         elif a in [4, 5, 7]:
+    #             p = 1.0
+    #         else:
+    #             p = 0.0
+    #     else:
+    #         p = 0.0
+    #
+    #     # transition to next state
+    #     if p == 1.0:
+    #         s_from = deepcopy(s_to)
+    #         s_from[a] -= 1
+    #         return p, s_from
+    #     else:
+    #         return p, None
 
 
 # ------------------------------------------- Training: Learn weights ----------------------------------------------- #
@@ -458,10 +459,10 @@ for i in range(0, len(canonical_data)):
     # print(sm_abstract.distance(), sm_true.distance())
 
 match_accuracy = np.sum(match_scores, axis=0)/len(match_scores)
-np.savetxt("match_short.csv", match_accuracy)
+np.savetxt("match_short_old.csv", match_accuracy)
 
 predict_accuracy = np.sum(predict_scores, axis=0)/len(predict_scores)
-np.savetxt("predict_short.csv", predict_accuracy)
+np.savetxt("predict_short_old.csv", predict_accuracy)
 
 sns.set(style="darkgrid", context="paper")
 steps = range(1, len(match_accuracy)+1)
@@ -470,10 +471,10 @@ plt.figure()
 plt.bar(steps, match_accuracy)
 plt.ylim(0, 1)
 plt.xticks(steps)
-plt.savefig("trajectory_matching_fixed.jpg")
+plt.savefig("trajectory_matching_short_old.jpg")
 
 plt.figure()
 plt.bar(steps, predict_accuracy)
 plt.ylim(0, 1)
 plt.xticks(steps)
-plt.savefig("trajectory_prediction_fixed.jpg")
+plt.savefig("trajectory_prediction_short_old.jpg")
