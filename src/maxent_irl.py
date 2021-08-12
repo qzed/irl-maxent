@@ -217,6 +217,9 @@ def predict_trajectory(qf, states, demos, transition_function):
 
 
 def random_trajectory(states, demos, transition_function):
+    """
+    random predicted trajectory
+    """
 
     demo = demos[0]
     s, available_actions = 0, demo.copy()

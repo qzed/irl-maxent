@@ -87,6 +87,7 @@ for i in range(len(canonical_demos)):
     canonical_task = CanonicalTask(canonical_features[i])
     canonical_task.set_end_state(canonical_demos[i])
     canonical_task.scale_features()
+    # canonical_task.convert_to_rankings()
 
     # list all states
     canonical_states = enumerate_states(canonical_task.s_start, canonical_task.actions, canonical_task.transition)

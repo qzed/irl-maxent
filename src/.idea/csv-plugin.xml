@@ -31,6 +31,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\assembly_tasks.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\canonical_assembly.py">
           <value>
             <Attribute>

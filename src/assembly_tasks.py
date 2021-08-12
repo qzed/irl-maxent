@@ -8,7 +8,7 @@ class AssemblyTask:
 
         self.num_actions, self.num_features = np.shape(features)
         self.actions = np.array(range(self.num_actions))
-        self.features = features
+        self.features = np.array(features)
 
         self.min_value, self.max_value = 1.0, 7.0  # rating are on 1-7 Likert scale
 
@@ -19,6 +19,14 @@ class AssemblyTask:
 
     def scale_features(self):
         self.features = (np.array(self.features) - self.min_value) / (self.max_value - self.min_value)
+
+    def convert_to_rankings(self):
+        for feature_idx in range(self.num_features):
+            feature_values = self.features[:, feature_idx]
+            sorted_values = [x for x, _, _ in sorted(zip(self.actions, feature_values, self.nominal_features)
+                                                     , key=lambda y: (y[1], y[2]))]
+            feature_ranks = np.array(sorted_values).argsort()
+            self.features[:, feature_idx] = feature_ranks
 
     def set_end_state(self, user_demo):
         terminal_state = list(np.bincount(user_demo))
@@ -64,13 +72,14 @@ class CanonicalTask(AssemblyTask):
     5 - screw wire
 
     feature values for each action = [physical_effort, mental_effort]
-    features = [[1.2, 1.1],  # insert long bolt
-                [1.1, 1.1],  # insert short bolt
-                [4.0, 6.0],  # insert wire
-                [6.0, 2.0],  # screw long bolt
-                [2.0, 2.0],  # screw short bolt
-                [1.1, 2.0]]  # screw wire
     """
+
+    nominal_features = [[1.2, 1.1],  # insert long bolt
+                        [1.1, 1.1],  # insert short bolt
+                        [4.0, 6.0],  # insert wire
+                        [6.0, 2.0],  # screw long bolt
+                        [2.0, 2.0],  # screw short bolt
+                        [1.1, 2.0]]  # screw wire
 
     @staticmethod
     def transition(s_from, a):
