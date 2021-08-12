@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import optimizer as O  # stochastic gradient descent optimizer
 from vi import value_iteration
 from maxent_irl import *
-from assembly_task import *
+from assembly_tasks import *
 
 # -------------------------------------------------- Load data ------------------------------------------------------ #
 # paths
@@ -40,29 +40,25 @@ def process_val(x):
     return x
 
 
-# load user ratings for canonical task
-canonical_features = []
-for i in range(2, len(ratings_df)):
-    fea_mat = []
-    for j in [1, 3, 5, 2, 4, 6]:
-        phy_col = "Q7_" + str(j)
-        men_col = "Q8_" + str(j)
-        phy_val = process_val(ratings_df[phy_col][i])
-        men_val = process_val(ratings_df[men_col][i])
-        fea_mat.append([phy_val, men_val])
-    canonical_features.append(fea_mat.copy())
+# load user ratings
+def load_features(data, feature_idx, action_idx):
+    user_features = []
+    for i in range(2, len(ratings_df)):
+        fea_mat = []
+        for j in action_idx:
+            fea_vec = []
+            for k in feature_idx:
+                fea_col = k + str(j)
+                fea_val = process_val(ratings_df[fea_col][i])
+                fea_vec.append(fea_val)
+            fea_mat.append(fea_vec)
+        user_features.append(fea_mat.copy())
+    return user_features
 
-# load user ratings for complex task
-complex_features = []
-for i in range(2, len(ratings_df)):
-    fea_mat = []
-    for j in [1, 3, 7, 8, 2, 4, 5, 6]:
-        phy_col = "Q14_" + str(j)
-        men_col = "Q15_" + str(j)
-        phy_val = process_val(ratings_df[phy_col][i])
-        men_val = process_val(ratings_df[men_col][i])
-        fea_mat.append([phy_val, men_val])
-    complex_features.append(fea_mat.copy())
+
+# user ratings for features
+canonical_features = load_features(ratings_df, ["Q7_", "Q8_"], [1, 3, 5, 2, 4, 6])
+complex_features = load_features(ratings_df, ["Q14_", "Q15_"], [1, 3, 7, 8, 2, 4, 5, 6])
 
 # ------------------------------------------------- Optimization ---------------------------------------------------- #
 

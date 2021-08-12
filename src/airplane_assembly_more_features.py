@@ -8,7 +8,7 @@ from itertools import product  # Cartesian product for iterators
 
 import optimizer as O  # stochastic gradient descent optimizer
 from vi import value_iteration
-from maxent_irl import *
+from maxent_irl_old import *
 
 root_path = "data/"
 canonical_path = root_path + "canonical_demos.csv"
