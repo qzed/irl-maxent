@@ -42,7 +42,7 @@ class AssemblyTask:
         if a >= 0:
             s_from = deepcopy(s_to[:-1])
             s_from[a] -= 1
-            previous_actions = [a for a, s in enumerate(s_from) if s == 1]
+            previous_actions = [a for a, s in enumerate(s_from) if s >= 1]
             if previous_actions:
                 for prev_a in previous_actions:
                     prob, s = self.back_transition(s_from, prev_a)
@@ -66,28 +66,28 @@ class CanonicalTask(AssemblyTask):
     Actions:
     0 - insert long bolt
     1 - insert short bolt
-    2 - insert wire
+    2 - insert wire (short)
     3 - screw long bolt
     4 - screw short bolt
-    5 - screw wire
+    5 - screw wire / insert wire (long)
 
     feature values for each action = [physical_effort, mental_effort]
     """
 
     nominal_features = [[1.2, 1.1],  # insert long bolt
                         [1.1, 1.1],  # insert short bolt
-                        [4.0, 6.0],  # insert wire
+                        [4.0, 6.0],  # insert wire (short)
                         [6.0, 2.0],  # screw long bolt
                         [2.0, 2.0],  # screw short bolt
-                        [1.1, 2.0]]  # screw wire
+                        [5.0, 6.9]]  # insert wire (long)
 
     @staticmethod
     def transition(s_from, a):
         # preconditions
         if s_from[a] < 1:
-            if a in [0, 1, 2]:
+            if a in [0, 1, 2, 5]:
                 prob = 1.0
-            elif a in [3, 4, 5] and s_from[a - 3] == 1:
+            elif a in [3, 4] and s_from[a - 3] == 1:
                 prob = 1.0
             else:
                 prob = 0.0
@@ -107,9 +107,9 @@ class CanonicalTask(AssemblyTask):
     def back_transition(s_to, a):
         # preconditions
         if s_to[a] > 0:
-            if a in [0, 1, 2] and s_to[a + 3] < 1:
+            if a in [0, 1] and s_to[a + 3] < 1:
                 p = 1.0
-            elif a in [3, 4, 5]:
+            elif a in [2, 3, 4, 5]:
                 p = 1.0
             else:
                 p = 0.0
@@ -139,15 +139,16 @@ class ComplexTask(AssemblyTask):
     6 - screw propeller
     7 - screw propeller base
 
-    features = [[3.5, 3.5],  # insert main wing
-                [2.0, 3.0],  # insert tail wing
-                [1.2, 1.1],  # insert long bolt into main wing
-                [1.1, 1.1],  # insert long bolt into tail wing
-                [2.1, 2.1],  # screw long bolt into main wing
-                [2.0, 2.0],  # screw long bolt into tail wing
-                [3.5, 6.0],  # screw propeller
-                [2.0, 3.5]]  # screw propeller base
     """
+
+    nominal_features = [[3.5, 3.5],  # insert main wing
+                        [2.0, 3.0],  # insert tail wing
+                        [1.2, 1.1],  # insert long bolt into main wing
+                        [1.1, 1.1],  # insert long bolt into tail wing
+                        [2.1, 2.1],  # screw long bolt into main wing
+                        [2.0, 2.0],  # screw long bolt into tail wing
+                        [3.5, 6.0],  # screw propeller
+                        [2.0, 3.5]]  # screw propeller base
 
     @staticmethod
     def transition(s_from, a):
@@ -156,11 +157,11 @@ class ComplexTask(AssemblyTask):
             p = 1.0
         elif a == 2 and s_from[a] < 4 and s_from[0] == 1:
             p = 1.0
-        elif a == 3 and s_from[a] < 2 and s_from[1] == 1:
+        elif a == 3 and s_from[a] < 1 and s_from[1] == 1:
             p = 1.0
         elif a == 4 and s_from[a] < 4 and s_from[a] + 1 <= s_from[a - 2]:
             p = 1.0
-        elif a == 5 and s_from[a] < 2 and s_from[a] + 1 <= s_from[a - 2]:
+        elif a == 5 and s_from[a] < 1 and s_from[a] + 1 <= s_from[a - 2]:
             p = 1.0
         elif a == 6 and s_from[a] < 4:
             p = 1.0

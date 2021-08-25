@@ -45,6 +45,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\experiments.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\generate_figures.py">
           <value>
             <Attribute>
@@ -53,6 +60,13 @@
           </value>
         </entry>
         <entry key="\maxent_irl.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\plot_figures.py">
           <value>
             <Attribute>
               <option name="separator" value="," />

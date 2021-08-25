@@ -86,8 +86,8 @@ for i in range(len(canonical_demos)):
     # initialize canonical task
     canonical_task = CanonicalTask(canonical_features[i])
     canonical_task.set_end_state(canonical_demos[i])
-    canonical_task.scale_features()
     # canonical_task.convert_to_rankings()
+    canonical_task.scale_features()
 
     # list all states
     canonical_states = enumerate_states(canonical_task.s_start, canonical_task.actions, canonical_task.transition)
@@ -108,14 +108,14 @@ for i in range(len(canonical_demos)):
     print("Training ...")
 
     # using true features
-    canonical_rewards_true, canonical_weights_true = maxent_irl(canonical_states,
-                                                                canonical_task.actions,
-                                                                canonical_task.transition,
-                                                                canonical_task.prev_states,
-                                                                canonical_state_features,
-                                                                canonical_terminal_idx,
-                                                                canonical_trajectories,
-                                                                optim, init)
+    # canonical_rewards_true, canonical_weights_true = maxent_irl(canonical_states,
+    #                                                             canonical_task.actions,
+    #                                                             canonical_task.transition,
+    #                                                             canonical_task.prev_states,
+    #                                                             canonical_state_features,
+    #                                                             canonical_terminal_idx,
+    #                                                             canonical_trajectories,
+    #                                                             optim, init)
 
     # using abstract features
     canonical_rewards_abstract, canonical_weights_abstract = maxent_irl(canonical_states,
@@ -131,10 +131,10 @@ for i in range(len(canonical_demos)):
 
     # --------------------------------------- Verifying: Reproduce demo --------------------------------------------- #
 
-    qf_true, _, _ = value_iteration(canonical_states, canonical_task.actions, canonical_task.transition,
-                                    canonical_rewards_true, canonical_terminal_idx)
-    generated_sequence_true = rollout_trajectory(qf_true, canonical_states, canonical_user_demo,
-                                                 canonical_task.transition)
+    # qf_true, _, _ = value_iteration(canonical_states, canonical_task.actions, canonical_task.transition,
+    #                                 canonical_rewards_true, canonical_terminal_idx)
+    # generated_sequence_true = rollout_trajectory(qf_true, canonical_states, canonical_user_demo,
+    #                                              canonical_task.transition)
 
     qf_abstract, _, _ = value_iteration(canonical_states, canonical_task.actions, canonical_task.transition,
                                         canonical_rewards_abstract, canonical_terminal_idx)
@@ -144,7 +144,7 @@ for i in range(len(canonical_demos)):
     print("\n")
     print("Canonical task:")
     print("       demonstration -", canonical_user_demo)
-    print("    generated (true) -", generated_sequence_true)
+    # print("    generated (true) -", generated_sequence_true)
     print("generated (abstract) -", generated_sequence_abstract)
 
     # ----------------------------------------- Testing: Predict complex -------------------------------------------- #
@@ -152,6 +152,7 @@ for i in range(len(canonical_demos)):
     # initialize complex task
     complex_task = ComplexTask(complex_features[i])
     complex_task.set_end_state(complex_demos[i])
+    # complex_task.convert_to_rankings()
     complex_task.scale_features()
 
     # list all states
@@ -180,14 +181,14 @@ for i in range(len(canonical_demos)):
                                                   complex_task.transition)
 
     # using true features
-    complex_rewards_true, complex_weights_true = maxent_irl(complex_states,
-                                                            complex_task.actions,
-                                                            complex_task.transition,
-                                                            complex_task.prev_states,
-                                                            complex_state_features,
-                                                            complex_terminal_idx,
-                                                            complex_trajectories,
-                                                            optim, init)
+    # complex_rewards_true, complex_weights_true = maxent_irl(complex_states,
+    #                                                         complex_task.actions,
+    #                                                         complex_task.transition,
+    #                                                         complex_task.prev_states,
+    #                                                         complex_state_features,
+    #                                                         complex_terminal_idx,
+    #                                                         complex_trajectories,
+    #                                                         optim, init)
 
     # using abstract features
     complex_rewards_abstract, complex_weights_abstract = maxent_irl(complex_states,
@@ -197,14 +198,18 @@ for i in range(len(canonical_demos)):
                                                                     complex_abstract_features,
                                                                     complex_terminal_idx,
                                                                     complex_trajectories,
-                                                                    optim, init)
+                                                                    optim, init, eps=5e-2)
 
     print("\n")
     print("Complex task:")
     print("       demonstration -", complex_user_demo)
     print("rolled (abstract) -", rolled_sequence_abstract)
 
-    _, random_score = random_trajectory(complex_states, complex_user_demo, complex_task.transition)
+    random_score = []
+    for _ in range(1000):
+        _, r_score = random_trajectory(complex_states, complex_user_demo, complex_task.transition)
+        random_score.append(r_score)
+    random_score = np.mean(random_score, axis=0)
     random_scores.append(random_score)
 
     match_score = (np.array(complex_user_demo[0]) == np.array(rolled_sequence_abstract))
@@ -214,11 +219,11 @@ for i in range(len(canonical_demos)):
     predict_scores.append(predict_score)
 
 # ---------------------------------------------------- Results ------------------------------------------------------ #
-random_accuracy = np.sum(random_scores, axis=0)/len(random_scores)
-np.savetxt("results/random.csv", random_accuracy)
+# random_accuracy = np.sum(random_scores, axis=0)/len(random_scores)
+np.savetxt("results/random.csv", random_scores)
 
-match_accuracy = np.sum(match_scores, axis=0)/len(match_scores)
-np.savetxt("results/match.csv", match_accuracy)
+# match_accuracy = np.sum(match_scores, axis=0)/len(match_scores)
+np.savetxt("results/match.csv", match_scores)
 
-predict_accuracy = np.sum(predict_scores, axis=0)/len(predict_scores)
-np.savetxt("results/predict.csv", predict_accuracy)
+# predict_accuracy = np.sum(predict_scores, axis=0)/len(predict_scores)
+np.savetxt("results/predict.csv", predict_scores)

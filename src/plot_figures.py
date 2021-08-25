@@ -3,11 +3,14 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-match_accuracy = np.loadtxt("results/match.csv")
-predict_accuracy = np.loadtxt("results/predict.csv")
-random_accuracy = np.loadtxt("results/random.csv")
+match_scores = np.loadtxt("results/match.csv")
+predict_scores = np.loadtxt("results/predict.csv")
+random_scores = np.loadtxt("results/random.csv")
 sns.set(style="darkgrid", context="talk")
 
+match_accuracy = np.sum(match_scores, axis=0)/len(match_scores)
+predict_accuracy = np.sum(predict_scores, axis=0)/len(predict_scores)
+random_accuracy = np.sum(random_scores, axis=0)/len(random_scores)
 steps = range(1, len(match_accuracy)+1)
 
 plt.figure(figsize=(10, 5))
@@ -19,4 +22,4 @@ plt.xlabel("Action")
 plt.ylabel("Accuracy")
 plt.gcf().subplots_adjust(bottom=0.15)
 plt.legend(["proposed", "random"], loc=4)
-plt.savefig("figures/results1.jpg")
+plt.savefig("figures/results6.jpg")
