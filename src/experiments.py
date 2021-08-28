@@ -84,62 +84,39 @@ for i in range(len(canonical_demos)):
     # ---------------------------------------- Training: Learn weights ---------------------------------------------- #
 
     # initialize canonical task
-    canonical_task = CanonicalTask(canonical_features[i])
-    canonical_task.set_end_state(canonical_demos[i])
-    # canonical_task.convert_to_rankings()
-    canonical_task.scale_features()
-
-    # list all states
-    canonical_states = enumerate_states(canonical_task.s_start, canonical_task.actions, canonical_task.transition)
-
-    # index of the terminal state
-    canonical_terminal_idx = [canonical_states.index(s_terminal) for s_terminal in canonical_task.s_end]
-
-    # features for each state
-    canonical_state_features = np.array(canonical_states)/np.max(canonical_states)
-    canonical_action_features = np.vstack((canonical_task.features, [[0., 0.]]))
-    canonical_abstract_features = np.array([feature_vector(state, canonical_states[-1], canonical_action_features)
-                                            for state in canonical_states])
+    C = CanonicalTask(canonical_features[i])
+    C.set_end_state(canonical_demos[i])
+    C.enumerate_states()
+    C.set_terminal_idx()
+    # C.scale_features()
 
     # demonstrations
     canonical_user_demo = [list(canonical_demos[i])]
-    canonical_trajectories = get_trajectories(canonical_states, canonical_user_demo, canonical_task.transition)
+    canonical_trajectories = get_trajectories(C.states, canonical_user_demo, C.transition)
 
     print("Training ...")
 
     # using true features
-    # canonical_rewards_true, canonical_weights_true = maxent_irl(canonical_states,
-    #                                                             canonical_task.actions,
-    #                                                             canonical_task.transition,
-    #                                                             canonical_task.prev_states,
-    #                                                             canonical_state_features,
-    #                                                             canonical_terminal_idx,
-    #                                                             canonical_trajectories,
+    # canonical_state_features = np.array(C.states)/np.max(C.states)
+    # canonical_rewards_true, canonical_weights_true = maxent_irl(C, canonical_state_features, canonical_trajectories,
     #                                                             optim, init)
 
     # using abstract features
-    canonical_rewards_abstract, canonical_weights_abstract = maxent_irl(canonical_states,
-                                                                        canonical_task.actions,
-                                                                        canonical_task.transition,
-                                                                        canonical_task.prev_states,
-                                                                        canonical_abstract_features,
-                                                                        canonical_terminal_idx,
-                                                                        canonical_trajectories,
+    abstract_features = np.array([C.get_features(state) for state in C.states])
+    abstract_features /= np.linalg.norm(abstract_features, axis=0)
+    canonical_rewards_abstract, canonical_weights_abstract = maxent_irl(C, abstract_features, canonical_trajectories,
                                                                         optim, init)
 
     print("Weights have been learned for the canonical task! Hopefully.")
+    print("Weights -", canonical_weights_abstract)
 
     # --------------------------------------- Verifying: Reproduce demo --------------------------------------------- #
 
-    # qf_true, _, _ = value_iteration(canonical_states, canonical_task.actions, canonical_task.transition,
-    #                                 canonical_rewards_true, canonical_terminal_idx)
-    # generated_sequence_true = rollout_trajectory(qf_true, canonical_states, canonical_user_demo,
-    #                                              canonical_task.transition)
+    # qf_true, _, _ = value_iteration(C.states, C.actions, C.transition, canonical_rewards_true, C.terminal_idx)
+    # generated_sequence_true = rollout_trajectory(qf_true, C.states, canonical_user_demo, C.transition)
 
-    qf_abstract, _, _ = value_iteration(canonical_states, canonical_task.actions, canonical_task.transition,
-                                        canonical_rewards_abstract, canonical_terminal_idx)
-    generated_sequence_abstract = rollout_trajectory(qf_abstract, canonical_states, canonical_user_demo,
-                                                     canonical_task.transition)
+    qf_abstract, _, _ = value_iteration(C.states, C.actions, C.transition, canonical_rewards_abstract, C.terminal_idx)
+    generated_sequence_abstract = rollout_trajectory(qf_abstract, C.states, canonical_user_demo, C.transition)
 
     print("\n")
     print("Canonical task:")
@@ -150,73 +127,53 @@ for i in range(len(canonical_demos)):
     # ----------------------------------------- Testing: Predict complex -------------------------------------------- #
 
     # initialize complex task
-    complex_task = ComplexTask(complex_features[i])
-    complex_task.set_end_state(complex_demos[i])
-    # complex_task.convert_to_rankings()
-    complex_task.scale_features()
-
-    # list all states
-    complex_states = enumerate_states(complex_task.s_start, complex_task.actions, complex_task.transition)
-
-    # index of the terminal state
-    complex_terminal_idx = [complex_states.index(s_terminal) for s_terminal in complex_task.s_end]
-
-    # features for each state
-    complex_state_features = np.array(complex_states)/np.max(complex_states)
-    complex_action_features = np.vstack((complex_task.features, [[0., 0.]]))
-    complex_abstract_features = np.array([feature_vector(state, complex_states[-1], complex_action_features)
-                                          for state in complex_states])
+    X = ComplexTask(complex_features[i])
+    X.set_end_state(complex_demos[i])
+    X.enumerate_states()
+    X.set_terminal_idx()
+    # X.scale_features()
 
     # demonstrations
     complex_user_demo = [list(complex_demos[i])]
-    complex_trajectories = get_trajectories(complex_states, complex_user_demo, complex_task.transition)
+    complex_trajectories = get_trajectories(X.states, complex_user_demo, X.transition)
+
+    # using abstract features
+    complex_abstract_features = np.array([X.get_features(state) for state in X.states])
+    complex_abstract_features /= np.linalg.norm(complex_abstract_features, axis=0)
 
     # transfer rewards to complex task
     transfer_rewards_abstract = complex_abstract_features.dot(canonical_weights_abstract)
 
-    # rollout trajectory
-    qf_abstract, _, _ = value_iteration(complex_states, complex_task.actions, complex_task.transition,
-                                        transfer_rewards_abstract, complex_terminal_idx)
-    rolled_sequence_abstract = rollout_trajectory(qf_abstract, complex_states, complex_user_demo,
-                                                  complex_task.transition)
+    # using abstract features
+    # complex_rewards_abstract, complex_weights_abstract = maxent_irl(X, complex_abstract_features,
+    #                                                                 complex_trajectories,
+    #                                                                 optim, init, eps=1e-2)
 
     # using true features
-    # complex_rewards_true, complex_weights_true = maxent_irl(complex_states,
-    #                                                         complex_task.actions,
-    #                                                         complex_task.transition,
-    #                                                         complex_task.prev_states,
-    #                                                         complex_state_features,
-    #                                                         complex_terminal_idx,
-    #                                                         complex_trajectories,
+    # complex_state_features = np.array(X.states) / np.max(X.states)
+    # complex_rewards_true, complex_weight0s_true = maxent_irl(X, complex_state_features, complex_trajectories,
     #                                                         optim, init)
 
-    # using abstract features
-    complex_rewards_abstract, complex_weights_abstract = maxent_irl(complex_states,
-                                                                    complex_task.actions,
-                                                                    complex_task.transition,
-                                                                    complex_task.prev_states,
-                                                                    complex_abstract_features,
-                                                                    complex_terminal_idx,
-                                                                    complex_trajectories,
-                                                                    optim, init, eps=5e-2)
-
-    print("\n")
-    print("Complex task:")
-    print("       demonstration -", complex_user_demo)
-    print("rolled (abstract) -", rolled_sequence_abstract)
+    # rollout trajectory
+    qf_abstract, _, _ = value_iteration(X.states, X.actions, X.transition,
+                                        transfer_rewards_abstract, X.terminal_idx)
+    rolled_sequence_abstract = rollout_trajectory(qf_abstract, X.states, complex_user_demo, X.transition)
 
     random_score = []
     for _ in range(1000):
-        _, r_score = random_trajectory(complex_states, complex_user_demo, complex_task.transition)
+        _, r_score = random_trajectory(X.states, complex_user_demo, X.transition)
         random_score.append(r_score)
     random_score = np.mean(random_score, axis=0)
     random_scores.append(random_score)
 
-    match_score = (np.array(complex_user_demo[0]) == np.array(rolled_sequence_abstract))
-    match_scores.append(match_score)
-
-    _, predict_score = predict_trajectory(qf_abstract, complex_states, complex_user_demo, complex_task.transition)
+    predict_sequence, predict_score = predict_trajectory(qf_abstract, X.states, complex_user_demo, X.transition)
     predict_scores.append(predict_score)
+
+    print("\n")
+    print("Complex task:")
+    print("     demonstration -", complex_user_demo)
+    print("predict (abstract) -", predict_sequence)
+    print("rolled (abstract) -", rolled_sequence_abstract)
 
 # ---------------------------------------------------- Results ------------------------------------------------------ #
 # random_accuracy = np.sum(random_scores, axis=0)/len(random_scores)

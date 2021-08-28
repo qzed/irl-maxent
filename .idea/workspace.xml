@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="782e42c7-c677-44ca-87a1-0222e22348fa" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/airplane_assembly_more_features.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/match_short.csv" beforeDir="false" afterPath="$PROJECT_DIR$/src/match_short.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/predict_short.csv" beforeDir="false" afterPath="$PROJECT_DIR$/src/predict_short.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/trajectory_matching_fixed.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/src/trajectory_matching_fixed.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/trajectory_prediction_fixed.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/src/trajectory_prediction_fixed.jpg" afterDir="false" />
-    </list>
+    <list default="true" id="782e42c7-c677-44ca-87a1-0222e22348fa" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -34,7 +27,7 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -207,14 +200,5 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
-  </component>
-  <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/irl_maxent$transfer.coverage" NAME="transfer Coverage Results" MODIFIED="1627416515915" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/transform" />
-    <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly_loop.coverage" NAME="airplane_assembly_loop Coverage Results" MODIFIED="1628032747792" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
-    <SUITE FILE_PATH="coverage/irl_maxent$canonical_features.coverage" NAME="canonical_features Coverage Results" MODIFIED="1627343783538" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/transform" />
-    <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly.coverage" NAME="airplane_assembly Coverage Results" MODIFIED="1627428653109" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
-    <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly_uniquefeatures.coverage" NAME="airplane_assembly_uniquefeatures Coverage Results" MODIFIED="1627596960711" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gry" />
-    <SUITE FILE_PATH="coverage/irl_maxent$airplane_assembly_more_features.coverage" NAME="airplane_assembly_more_features Coverage Results" MODIFIED="1628296397439" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
-    <SUITE FILE_PATH="coverage/irl_maxent$canonical_assembly.coverage" NAME="canonical_assembly Coverage Results" MODIFIED="1627342562353" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
   </component>
 </project>

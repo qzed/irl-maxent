@@ -13,9 +13,11 @@ class AssemblyTask:
         self.min_value, self.max_value = 1.0, 7.0  # rating are on 1-7 Likert scale
 
         # start state of the assembly task (none of the actions have been performed)
-        self.s_start = [0] * self.num_actions + [-1]
-
+        self.s_start = [0] * self.num_actions + [-1, -1]
         self.s_end = []
+
+        self.states = [self.s_start]
+        self.terminal_idx = []
 
     def scale_features(self):
         self.features = (np.array(self.features) - self.min_value) / (self.max_value - self.min_value)
@@ -30,31 +32,90 @@ class AssemblyTask:
 
     def set_end_state(self, user_demo):
         terminal_state = list(np.bincount(user_demo))
-        for a in self.actions:
-            prob, s = self.back_transition(terminal_state, a)
-            if s:
-                self.s_end.append(terminal_state + [a])
+
+        for curr_a in self.actions:
+            _, prev_s = self.back_transition(terminal_state, curr_a)
+            if prev_s:
+                for prev_a in np.delete(self.actions, curr_a):
+                    _, s = self.back_transition(prev_s, prev_a)
+                    if s:
+                        self.s_end.append(terminal_state + [curr_a, prev_a])
+
+    def enumerate_states(self):
+        prev_states = self.states.copy()
+        while prev_states:
+            next_states = []
+            for state in prev_states:
+                for action in self.actions:
+                    p, next_state = self.transition(state, action)
+                    if next_state and (next_state not in next_states) and (next_state not in self.states):
+                        next_states.append(next_state)
+
+            prev_states = next_states
+            self.states += prev_states
+
+    def set_terminal_idx(self):
+        self.terminal_idx = [self.states.index(s_terminal) for s_terminal in self.s_end]
+
+    def get_features(self, state):
+
+        # calculate current phase
+        terminal_state = self.s_end[-1]
+        max_phase = sum(terminal_state[:-2])
+        phase = sum(state[:-2]) / max_phase
+
+        curr_a, prev_a = state[-2], state[-1]
+
+        if curr_a >= 0:
+            e_p, e_m = self.features[curr_a]
+        else:
+            e_p, e_m = 0.0, 0.0
+
+        if prev_a >= 0:
+            c_part = self.part_similarity[prev_a][curr_a]
+            c_tool = self.tool_similarity[prev_a][curr_a]
+        else:
+            c_part, c_tool = 0.0, 0.0
+
+        feature_value = np.array([phase * e_p, phase * e_m, (1.0 - phase) * e_p, (1.0 - phase) * e_m, c_part, c_tool])
+
+        # n_actions, n_features = np.array(action_features).shape
+        # feature_value = np.zeros(n_features)
+        # for action, executed in enumerate(state):
+        #     feature_value += executed * np.array(action_features[action])
+
+        return feature_value
 
     def prev_states(self, s_to):
         previous_states = []
 
-        a = s_to[-1]
-        if a >= 0:
-            s_from = deepcopy(s_to[:-1])
-            s_from[a] -= 1
-            previous_actions = [a for a, s in enumerate(s_from) if s >= 1]
-            if previous_actions:
-                for prev_a in previous_actions:
-                    prob, s = self.back_transition(s_from, prev_a)
-                    if s:
-                        prev_s = deepcopy(s_from)
-                        prev_s.append(prev_a)
-                        previous_states.append(prev_s)
+        curr_a = s_to[-2]
+        if curr_a >= 0:
+            s_from = deepcopy(s_to[:-2])
+            s_from[curr_a] -= 1
+            prev_a = s_to[-1]
+
+            previous_state = deepcopy(s_from)
+            previous_state.append(prev_a)
+            if prev_a >= 0:
+                hist_s = deepcopy(s_from)
+                hist_s[prev_a] -= 1
+                hist_actions = [a for a, s in enumerate(hist_s) if s >= 1]
+                if hist_actions:
+                    for hist_a in hist_actions:
+                        prob, s = self.back_transition(hist_s, hist_a)
+                        if s:
+                            prev_s = deepcopy(previous_state)
+                            prev_s.append(hist_a)
+                            previous_states.append(prev_s)
+                else:
+                    hist_a = -1
+                    previous_state.append(hist_a)
+                    previous_states.append(previous_state)
             else:
-                prev_a = -1
-                prev_s = deepcopy(s_from)
-                prev_s.append(prev_a)
-                previous_states.append(prev_s)
+                hist_a = -1
+                previous_state.append(hist_a)
+                previous_states.append(previous_state)
 
         return previous_states
 
@@ -81,6 +142,20 @@ class CanonicalTask(AssemblyTask):
                         [2.0, 2.0],  # screw short bolt
                         [5.0, 6.9]]  # insert wire (long)
 
+    part_similarity = [[1, 0, 0, 1, 0, 1],
+                       [0, 1, 1, 0, 1, 0],
+                       [0, 1, 1, 0, 1, 0],
+                       [1, 0, 0, 1, 0, 1],
+                       [0, 1, 1, 0, 1, 0],
+                       [1, 0, 0, 1, 0, 1]]
+
+    tool_similarity = [[1, 0, 0, 0, 0, 0],
+                       [0, 1, 0, 0, 0, 0],
+                       [0, 0, 1, 0, 0, 0],
+                       [0, 0, 0, 1, 1, 0],
+                       [0, 0, 0, 1, 1, 0],
+                       [0, 0, 0, 0, 0, 1]]
+
     @staticmethod
     def transition(s_from, a):
         # preconditions
@@ -98,7 +173,8 @@ class CanonicalTask(AssemblyTask):
         if prob == 1.0:
             s_to = deepcopy(s_from)
             s_to[a] += 1
-            s_to[-1] = a
+            s_to[-1] = s_from[-2]
+            s_to[-2] = a
             return prob, s_to
         else:
             return prob, None
@@ -150,6 +226,24 @@ class ComplexTask(AssemblyTask):
                         [3.5, 6.0],  # screw propeller
                         [2.0, 3.5]]  # screw propeller base
 
+    part_similarity = [[1, 0, 1, 0, 1, 0, 0, 0],
+                       [0, 1, 0, 1, 0, 1, 0, 0],
+                       [1, 0, 1, 0, 1, 0, 0, 0],
+                       [0, 1, 0, 1, 0, 1, 0, 0],
+                       [1, 0, 1, 0, 1, 0, 0, 0],
+                       [0, 1, 0, 1, 0, 1, 0, 0],
+                       [0, 0, 0, 0, 0, 0, 1, 1],
+                       [0, 0, 0, 0, 0, 0, 1, 1]]
+
+    tool_similarity = [[1, 0, 0, 0, 0, 0, 0, 0],
+                       [0, 1, 0, 0, 0, 0, 0, 0],
+                       [0, 0, 1, 0, 0, 0, 0, 0],
+                       [0, 0, 0, 1, 0, 0, 0, 0],
+                       [0, 0, 0, 0, 1, 1, 1, 0],
+                       [0, 0, 0, 0, 1, 1, 1, 0],
+                       [0, 0, 0, 0, 1, 1, 1, 0],
+                       [0, 0, 0, 0, 0, 0, 0, 1]]
+
     @staticmethod
     def transition(s_from, a):
         # preconditions
@@ -174,7 +268,8 @@ class ComplexTask(AssemblyTask):
         if p == 1.0:
             s_to = deepcopy(s_from)
             s_to[a] += 1
-            s_to[-1] = a
+            s_to[-1] = s_from[-2]
+            s_to[-2] = a
             return p, s_to
         else:
             return p, None
