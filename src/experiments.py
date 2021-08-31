@@ -69,7 +69,7 @@ init = O.Constant(1.0)
 
 # choose our optimization strategy:
 # we select exponentiated stochastic gradient descent with linear learning-rate decay
-optim = O.ExpSga(lr=O.linear_decay(lr0=0.2))
+optim = O.ExpSga(lr=O.linear_decay(lr0=0.6))
 
 # ------------------------------------------- Training: Learn weights ----------------------------------------------- #
 
@@ -101,10 +101,11 @@ for i in range(len(canonical_demos)):
     # canonical_rewards_true, canonical_weights_true = maxent_irl(C, canonical_state_features, canonical_trajectories,
     #                                                             optim, init)
 
-    # using abstract features
+    # # using abstract features
     abstract_features = np.array([C.get_features(state) for state in C.states])
-    abstract_features /= np.linalg.norm(abstract_features, axis=0)
-    canonical_rewards_abstract, canonical_weights_abstract = maxent_irl(C, abstract_features, canonical_trajectories,
+    norm_abstract_features = abstract_features / np.linalg.norm(abstract_features, axis=0)
+    canonical_rewards_abstract, canonical_weights_abstract = maxent_irl(C, norm_abstract_features,
+                                                                        canonical_trajectories,
                                                                         optim, init)
 
     print("Weights have been learned for the canonical task! Hopefully.")
@@ -143,6 +144,7 @@ for i in range(len(canonical_demos)):
 
     # transfer rewards to complex task
     transfer_rewards_abstract = complex_abstract_features.dot(canonical_weights_abstract)
+    random_rewards_abstract = complex_abstract_features.dot(np.ones(6))
 
     # using abstract features
     # complex_rewards_abstract, complex_weights_abstract = maxent_irl(X, complex_abstract_features,
@@ -154,33 +156,35 @@ for i in range(len(canonical_demos)):
     # complex_rewards_true, complex_weight0s_true = maxent_irl(X, complex_state_features, complex_trajectories,
     #                                                         optim, init)
 
-    # rollout trajectory
-    qf_abstract, _, _ = value_iteration(X.states, X.actions, X.transition,
-                                        transfer_rewards_abstract, X.terminal_idx)
-    rolled_sequence_abstract = rollout_trajectory(qf_abstract, X.states, complex_user_demo, X.transition)
+    # score for predicting the action based on transferred rewards based on abstract features
+    qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract, X.terminal_idx)
+    predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, complex_user_demo, X.transition)
+    predict_scores.append(predict_score)
 
-    random_score = []
-    for _ in range(1000):
-        _, r_score = random_trajectory(X.states, complex_user_demo, X.transition)
-        random_score.append(r_score)
-    random_score = np.mean(random_score, axis=0)
+    # score for predicting the action based on random rewards based on abstract features
+    qf_random, _, _ = value_iteration(X.states, X.actions, X.transition, random_rewards_abstract, X.terminal_idx)
+    _, random_score = predict_trajectory(qf_random, X.states, complex_user_demo, X.transition)
     random_scores.append(random_score)
 
-    predict_sequence, predict_score = predict_trajectory(qf_abstract, X.states, complex_user_demo, X.transition)
-    predict_scores.append(predict_score)
+    # score for randomly selecting an action
+    # random_score = []
+    # for _ in range(1000):
+    #     _, r_score = random_trajectory(X.states, complex_user_demo, X.transition)
+    #     random_score.append(r_score)
+    # random_score = np.mean(random_score, axis=0)
+    # random_scores.append(random_score)
 
     print("\n")
     print("Complex task:")
     print("     demonstration -", complex_user_demo)
     print("predict (abstract) -", predict_sequence)
-    print("rolled (abstract) -", rolled_sequence_abstract)
 
 # ---------------------------------------------------- Results ------------------------------------------------------ #
 # random_accuracy = np.sum(random_scores, axis=0)/len(random_scores)
-np.savetxt("results/random.csv", random_scores)
+# np.savetxt("results/random11.csv", random_scores)
 
 # match_accuracy = np.sum(match_scores, axis=0)/len(match_scores)
-np.savetxt("results/match.csv", match_scores)
+# np.savetxt("results/match_random_weights.csv", match_scores)
 
 # predict_accuracy = np.sum(predict_scores, axis=0)/len(predict_scores)
-np.savetxt("results/predict.csv", predict_scores)
+# np.savetxt("results/predict11.csv", predict_scores)

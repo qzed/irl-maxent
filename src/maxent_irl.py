@@ -1,4 +1,5 @@
 import numpy as np
+from vi import value_iteration
 
 
 def get_reward(state, curr_action, omega, s_feature, task):
@@ -30,11 +31,7 @@ def feature_expectation_from_trajectories(s_features, trajectories):
     fe = np.zeros(n_features)
     for t in trajectories:  # for each trajectory
         for s_idx, a, sp_idx in t:  # for each state in trajectory
-            # prev_a = task.states[s_idx][-1]
-            # s_fe = s_features[sp_idx]
-            # s_fe = np.append(s_fe, task.part_similarity[prev_a][a])
-            # s_fe = np.append(s_fe, task.tool_similarity[prev_a][a])
-            # fe += s_fe
+
             fe += s_features[sp_idx]  # sum-up features
 
     return fe / len(trajectories)  # average over trajectories
@@ -61,7 +58,7 @@ def compute_expected_svf(task, p_initial, reward, max_iters, eps=1e-5):
     zs[terminal] = 1.0
 
     # 2. perform backward pass
-    for i in range(max_iters):
+    for i in range(2*n_states):
         za = np.zeros((n_states, n_actions))  # za: action partition function
         for s_idx in range(n_states):
             for a in actions:
@@ -69,8 +66,6 @@ def compute_expected_svf(task, p_initial, reward, max_iters, eps=1e-5):
                 if sp:
                     sp_idx = task.states.index(sp)
                     if zs[sp_idx] > 0.0:
-                        # za[s_idx, a] += np.exp(get_reward(states[s_idx], a, omega, s_features[s_idx], task)) \
-                        #                 * zs[sp_idx]
                         za[s_idx, a] += np.exp(reward[s_idx]) * zs[sp_idx]
 
         zs = za.sum(axis=1)
@@ -96,6 +91,40 @@ def compute_expected_svf(task, p_initial, reward, max_iters, eps=1e-5):
 
     # 6. sum-up frequencies
     return d.sum(axis=1)
+
+
+def compute_expected_svf_using_rollouts(task, reward, max_iters):
+    states, actions, terminal = task.states, task.actions, task.terminal_idx
+    n_states, n_actions = len(states), len(actions)
+
+    qf, vf, _ = value_iteration(states, actions, task.transition, reward, terminal)
+    svf = np.zeros(n_states)
+    for _ in range(n_states):
+        s_idx = 0
+        svf[s_idx] += 1
+        while s_idx not in task.terminal_idx:
+            max_action_val = -np.inf
+            candidates = []
+            for a in task.actions:
+                p, sp = task.transition(states[s_idx], a)
+                if sp:
+                    if qf[s_idx][a] > max_action_val:
+                        candidates = [a]
+                        max_action_val = qf[s_idx][a]
+                    elif qf[s_idx][a] == max_action_val:
+                        candidates.append(a)
+
+            if not candidates:
+                print("Error: No candidate actions from state", s_idx)
+
+            take_action = np.random.choice(candidates)
+            p, sp = task.transition(states[s_idx], take_action)
+            s_idx = states.index(sp)
+            svf[s_idx] += 1
+
+    e_svf = svf/n_states
+
+    return e_svf
 
 
 def maxent_irl(task, s_features, trajectories, optim, init, eps=1e-3):
@@ -126,13 +155,13 @@ def maxent_irl(task, s_features, trajectories, optim, init, eps=1e-3):
         reward = s_features.dot(omega)
 
         # compute gradient of the log-likelihood
-        e_svf = compute_expected_svf(task, p_initial, reward, demo_length)
+        e_svf = compute_expected_svf_using_rollouts(task, reward, demo_length)
         grad = e_features - s_features.T.dot(e_svf)
 
         # perform optimization step and compute delta for convergence
         optim.step(grad)
 
-        # re-compute detla for convergence check
+        # re-compute delta for convergence check
         delta = np.max(np.abs(omega_old - omega))
         # print(delta)
 
@@ -173,7 +202,7 @@ def predict_trajectory(qf, states, demos, transition_function):
     demo = demos[0]
     s, available_actions = 0, demo.copy()
 
-    generated_sequence, score = [], []
+    generated_sequence, scores = [], []
     for take_action in demo:
         max_action_val = -np.inf
         candidates = []
@@ -187,18 +216,26 @@ def predict_trajectory(qf, states, demos, transition_function):
                     candidates.append(a)
                     max_action_val = qf[s][a]
 
-        if not candidates:
-            print(s)
+        if len(candidates) > 1:
+            predict_iters = 1000
+        elif len(candidates) == 1:
+            predict_iters = 1
+        else:
+            print("Error: No candidate actions to pick from.")
 
-        predict_action = np.random.choice(candidates)
-        score.append(predict_action == take_action)
+        predict_score = []
+        for _ in range(predict_iters):
+            predict_action = np.random.choice(candidates)
+            predict_score.append(predict_action == take_action)
+        score = np.mean(predict_score)
+        scores.append(score)
 
         generated_sequence.append(predict_action)
         p, sp = transition_function(states[s], take_action)
         s = states.index(sp)
         available_actions.remove(take_action)
 
-    return generated_sequence, score
+    return generated_sequence, scores
 
 
 def random_trajectory(states, demos, transition_function):
