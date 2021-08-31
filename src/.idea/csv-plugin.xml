@@ -17,6 +17,27 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\airplane_assembly_new.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assembly_task.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assembly_tasks.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\canonical_assembly.py">
           <value>
             <Attribute>
@@ -24,7 +45,28 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\experiments.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\generate_figures.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\maxent_irl.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\plot_figures.py">
           <value>
             <Attribute>
               <option name="separator" value="," />

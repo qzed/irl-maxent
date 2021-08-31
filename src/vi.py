@@ -20,7 +20,7 @@ def value_iteration(states, actions, transition, rewards, terminal_states, delta
 
     qf = {s: {a: 0 for a in actions} for s in range(len(states))}
 
-    for i in range(44):
+    for i in range(100):
         vf_temp = {s: 0 for s in range(len(states))}
 
         for j_state in vf:
@@ -40,7 +40,7 @@ def value_iteration(states, actions, transition, rewards, terminal_states, delta
                     qf[j_state][k_action] += prob_ns * vf[int(int_ns)]
 
                 # Select max value v = max_a q(s, a)
-                if max_action_val < qf[j_state][k_action]:
+                if qf[j_state][k_action] > max_action_val:
                     max_action = k_action
                     max_action_val = qf[j_state][k_action]
 
