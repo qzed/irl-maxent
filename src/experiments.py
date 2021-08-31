@@ -101,29 +101,29 @@ for i in range(len(canonical_demos)):
     # canonical_rewards_true, canonical_weights_true = maxent_irl(C, canonical_state_features, canonical_trajectories,
     #                                                             optim, init)
 
-    # # using abstract features
-    abstract_features = np.array([C.get_features(state) for state in C.states])
-    norm_abstract_features = abstract_features / np.linalg.norm(abstract_features, axis=0)
-    canonical_rewards_abstract, canonical_weights_abstract = maxent_irl(C, norm_abstract_features,
-                                                                        canonical_trajectories,
-                                                                        optim, init)
-
-    print("Weights have been learned for the canonical task! Hopefully.")
-    print("Weights -", canonical_weights_abstract)
-
-    # --------------------------------------- Verifying: Reproduce demo --------------------------------------------- #
-
-    # qf_true, _, _ = value_iteration(C.states, C.actions, C.transition, canonical_rewards_true, C.terminal_idx)
-    # generated_sequence_true = rollout_trajectory(qf_true, C.states, canonical_user_demo, C.transition)
-
-    qf_abstract, _, _ = value_iteration(C.states, C.actions, C.transition, canonical_rewards_abstract, C.terminal_idx)
-    generated_sequence_abstract = rollout_trajectory(qf_abstract, C.states, canonical_user_demo, C.transition)
-
-    print("\n")
-    print("Canonical task:")
-    print("       demonstration -", canonical_user_demo)
-    # print("    generated (true) -", generated_sequence_true)
-    print("generated (abstract) -", generated_sequence_abstract)
+    # # # using abstract features
+    # abstract_features = np.array([C.get_features(state) for state in C.states])
+    # norm_abstract_features = abstract_features / np.linalg.norm(abstract_features, axis=0)
+    # canonical_rewards_abstract, canonical_weights_abstract = maxent_irl(C, norm_abstract_features,
+    #                                                                     canonical_trajectories,
+    #                                                                     optim, init)
+    #
+    # print("Weights have been learned for the canonical task! Hopefully.")
+    # print("Weights -", canonical_weights_abstract)
+    #
+    # # --------------------------------------- Verifying: Reproduce demo --------------------------------------------- #
+    #
+    # # qf_true, _, _ = value_iteration(C.states, C.actions, C.transition, canonical_rewards_true, C.terminal_idx)
+    # # generated_sequence_true = rollout_trajectory(qf_true, C.states, canonical_user_demo, C.transition)
+    #
+    # qf_abstract, _, _ = value_iteration(C.states, C.actions, C.transition, canonical_rewards_abstract, C.terminal_idx)
+    # generated_sequence_abstract = rollout_trajectory(qf_abstract, C.states, canonical_user_demo, C.transition)
+    #
+    # print("\n")
+    # print("Canonical task:")
+    # print("       demonstration -", canonical_user_demo)
+    # # print("    generated (true) -", generated_sequence_true)
+    # print("generated (abstract) -", generated_sequence_abstract)
 
     # ----------------------------------------- Testing: Predict complex -------------------------------------------- #
 
@@ -143,8 +143,8 @@ for i in range(len(canonical_demos)):
     complex_abstract_features /= np.linalg.norm(complex_abstract_features, axis=0)
 
     # transfer rewards to complex task
-    transfer_rewards_abstract = complex_abstract_features.dot(canonical_weights_abstract)
-    random_rewards_abstract = complex_abstract_features.dot(np.ones(6))
+    # transfer_rewards_abstract = complex_abstract_features.dot(canonical_weights_abstract)
+    # random_rewards_abstract = complex_abstract_features.dot(np.ones(6))
 
     # using abstract features
     # complex_rewards_abstract, complex_weights_abstract = maxent_irl(X, complex_abstract_features,
@@ -152,19 +152,19 @@ for i in range(len(canonical_demos)):
     #                                                                 optim, init, eps=1e-2)
 
     # using true features
-    # complex_state_features = np.array(X.states) / np.max(X.states)
-    # complex_rewards_true, complex_weight0s_true = maxent_irl(X, complex_state_features, complex_trajectories,
-    #                                                         optim, init)
+    complex_state_features = np.array(X.states) / np.linalg.norm(X.states, axis=0)
+    complex_rewards_true, complex_weights_true = maxent_irl(X, complex_state_features, complex_trajectories,
+                                                            optim, init)
 
     # score for predicting the action based on transferred rewards based on abstract features
-    qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract, X.terminal_idx)
+    qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, complex_rewards_true, X.terminal_idx)
     predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, complex_user_demo, X.transition)
     predict_scores.append(predict_score)
 
     # score for predicting the action based on random rewards based on abstract features
-    qf_random, _, _ = value_iteration(X.states, X.actions, X.transition, random_rewards_abstract, X.terminal_idx)
-    _, random_score = predict_trajectory(qf_random, X.states, complex_user_demo, X.transition)
-    random_scores.append(random_score)
+    # qf_random, _, _ = value_iteration(X.states, X.actions, X.transition, random_rewards_abstract, X.terminal_idx)
+    # _, random_score = predict_trajectory(qf_random, X.states, complex_user_demo, X.transition)
+    # random_scores.append(random_score)
 
     # score for randomly selecting an action
     # random_score = []
@@ -187,4 +187,4 @@ for i in range(len(canonical_demos)):
 # np.savetxt("results/match_random_weights.csv", match_scores)
 
 # predict_accuracy = np.sum(predict_scores, axis=0)/len(predict_scores)
-# np.savetxt("results/predict11.csv", predict_scores)
+np.savetxt("results/predict11_state_features.csv", predict_scores)
