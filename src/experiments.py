@@ -154,7 +154,7 @@ for i in range(len(canonical_demos)):
     # using true features
     complex_state_features = np.array(X.states) / np.linalg.norm(X.states, axis=0)
     complex_rewards_true, complex_weights_true = maxent_irl(X, complex_state_features, complex_trajectories,
-                                                            optim, init)
+                                                            optim, init, eps=1e-2)
 
     # score for predicting the action based on transferred rewards based on abstract features
     qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, complex_rewards_true, X.terminal_idx)
@@ -177,7 +177,7 @@ for i in range(len(canonical_demos)):
     print("\n")
     print("Complex task:")
     print("     demonstration -", complex_user_demo)
-    print("predict (abstract) -", predict_sequence)
+    # print("predict (abstract) -", predict_sequence)
 
 # ---------------------------------------------------- Results ------------------------------------------------------ #
 # random_accuracy = np.sum(random_scores, axis=0)/len(random_scores)
