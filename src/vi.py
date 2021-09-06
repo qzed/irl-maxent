@@ -26,13 +26,14 @@ def value_iteration(states, actions, transition, rewards, terminal_states, delta
         for j_state in vf:
             max_action = -1
             max_action_val = -np.inf
-            for k_action in actions:
-                # Check if terminal state
-                if j_state in terminal_states:  # keep the value function of the target 0
-                    vf_temp[j_state] = 1
-                    qf[j_state][k_action] = 1
-                    continue
 
+            # Check if terminal state
+            if j_state in terminal_states:
+                vf_temp[j_state] = rewards[j_state]
+                # qf[j_state][k_action] = 1
+                continue
+
+            for k_action in actions:
                 prob_ns, ns = transition(states[j_state], k_action)
                 qf[j_state][k_action] = rewards[j_state]
                 if ns:
@@ -61,7 +62,7 @@ def value_iteration(states, actions, transition, rewards, terminal_states, delta
         change = np.linalg.norm((np_v - np_v_temp))
         vf = vf_temp
         if change < delta:
-            print("VI converged after %d iterations" % (i))
+            # print("VI converged after %d iterations" % (i))
             break
 
     if change >= delta:
