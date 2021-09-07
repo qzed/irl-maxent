@@ -3,7 +3,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 
 
-def visualize_demo(task, demo):
+def visualize_demo(task, demo, idx):
 
     features, states, transition_function = task.features, task.states, task.transition
     # features = list((np.array(features) - 1.0) / (7.0 - 1.0))
@@ -51,6 +51,8 @@ def visualize_demo(task, demo):
         s = states.index(sp)
         available_actions.remove(take_action)
         prev_a = take_action
+
+    plt.savefig("visualizations/user" + str(idx) + ".jpg", bbox_inches='tight')
 
     return
 
