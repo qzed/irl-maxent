@@ -10,6 +10,7 @@ import optimizer as O  # stochastic gradient descent optimizer
 from vi import value_iteration
 from maxent_irl import *
 from assembly_tasks import *
+from visualize import *
 
 # -------------------------------------------------- Load data ------------------------------------------------------ #
 # paths
@@ -75,14 +76,14 @@ optim = O.ExpSga(lr=O.linear_decay(lr0=0.6))
 
 rank_features = False
 scale_weights = False
-run_proposed = False
-run_random_baseline = True
+run_proposed = True
+run_random_baseline = False
 
 match_scores, predict_scores, random_scores = [], [], []
 
 # loop over all users
 for i in range(len(canonical_demos)):
-
+    i = 10
     print("=======================")
     print("User:", i)
 
@@ -98,24 +99,25 @@ for i in range(len(canonical_demos)):
 
     # demonstrations
     canonical_user_demo = [list(canonical_demos[i])]
+    visualize_demo(C, canonical_user_demo[0])
     canonical_trajectories = get_trajectories(C.states, canonical_user_demo, C.transition)
 
-    if run_proposed:
-        print("Training ...")
-
-        # using abstract features
-        abstract_features = np.array([C.get_features(state) for state in C.states])
-        norm_abstract_features = abstract_features / np.linalg.norm(abstract_features, axis=0)
-        canonical_rewards_abstract, canonical_weights_abstract = maxent_irl(C, norm_abstract_features,
-                                                                            canonical_trajectories,
-                                                                            optim, init)
-
-        print("Weights have been learned for the canonical task! Hopefully.")
-        print("Weights -", canonical_weights_abstract)
-
-        # scale weights
-        if scale_weights:
-            canonical_weights_abstract /= max(canonical_weights_abstract)
+    # if run_proposed:
+    #     print("Training ...")
+    #
+    #     # using abstract features
+    #     abstract_features = np.array([C.get_features(state) for state in C.states])
+    #     norm_abstract_features = abstract_features / np.linalg.norm(abstract_features, axis=0)
+    #     canonical_rewards_abstract, canonical_weights_abstract = maxent_irl(C, norm_abstract_features,
+    #                                                                         canonical_trajectories,
+    #                                                                         optim, init)
+    #
+    #     print("Weights have been learned for the canonical task! Hopefully.")
+    #     print("Weights -", canonical_weights_abstract)
+    #
+    #     # scale weights
+    #     if scale_weights:
+    #         canonical_weights_abstract /= max(canonical_weights_abstract)
 
     # --------------------------------------- Verifying: Reproduce demo --------------------------------------------- #
 
@@ -152,11 +154,13 @@ for i in range(len(canonical_demos)):
 
     if run_proposed:
         # transfer rewards to complex task
+        canonical_weights_abstract = np.ones(6)
         transfer_rewards_abstract = complex_abstract_features.dot(canonical_weights_abstract)
 
         # score for predicting the action based on transferred rewards based on abstract features
         qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract, X.terminal_idx)
-        predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, complex_user_demo, X.transition)
+        predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, complex_user_demo, X.transition,
+                                                             sensitivity=0.02)
         predict_scores.append(predict_score)
 
     # -------------------------------- Training: Learn weights from complex demo ------------------------------------ #
@@ -197,7 +201,7 @@ for i in range(len(canonical_demos)):
 
 # -------------------------------------------------- Save results --------------------------------------------------- #
 if run_proposed:
-    np.savetxt("results_new_vi/predict11_ranked_normalized_features", predict_scores)
+    np.savetxt("results_new_vi/predict11_normalized_features_uniform_weights_sensitivity2.csv", predict_scores)
 
 if run_random_baseline:
     np.savetxt("results_new_vi/random11_normalized_features_random_weights.csv", random_scores)
