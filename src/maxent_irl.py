@@ -197,7 +197,7 @@ def rollout_trajectory(qf, states, demos, transition_function):
     return generated_sequence
 
 
-def predict_trajectory(qf, states, demos, transition_function):
+def predict_trajectory(qf, states, demos, transition_function, sensitivity=0):
 
     demo = demos[0]
     s, available_actions = 0, demo.copy()
@@ -209,10 +209,10 @@ def predict_trajectory(qf, states, demos, transition_function):
         for a in available_actions:
             p, sp = transition_function(states[s], a)
             if sp:
-                if qf[s][a] > max_action_val:
+                if qf[s][a] > (1 + sensitivity) * max_action_val:
                     candidates = [a]
                     max_action_val = qf[s][a]
-                elif qf[s][a] == max_action_val:
+                elif (1 - sensitivity) * max_action_val <= qf[s][a] <= (1 + sensitivity) * max_action_val:
                     candidates.append(a)
                     max_action_val = qf[s][a]
 

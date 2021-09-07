@@ -27,7 +27,7 @@ class AssemblyTask:
             feature_values = self.features[:, feature_idx]
             sorted_values = [x for x, _, _ in sorted(zip(self.actions, feature_values, self.nominal_features)
                                                      , key=lambda y: (y[1], y[2]))]
-            feature_ranks = np.array(sorted_values).argsort()
+            feature_ranks = np.array(sorted_values).argsort() + 1
             self.features[:, feature_idx] = feature_ranks
 
     def set_end_state(self, user_demo):
@@ -36,7 +36,9 @@ class AssemblyTask:
         for curr_a in self.actions:
             _, prev_s = self.back_transition(terminal_state, curr_a)
             if prev_s:
-                for prev_a in set(np.delete(user_demo, curr_a)):
+                rem_actions = list(user_demo)
+                rem_actions.remove(curr_a)
+                for prev_a in set(rem_actions):
                     _, s = self.back_transition(prev_s, prev_a)
                     if s:
                         self.s_end.append(terminal_state + [curr_a, prev_a])
