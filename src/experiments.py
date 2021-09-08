@@ -83,7 +83,7 @@ match_scores, predict_scores, random_scores = [], [], []
 
 # loop over all users
 for i in range(len(canonical_demos)):
-
+    i = 10
     print("=======================")
     print("User:", i)
 
@@ -99,8 +99,7 @@ for i in range(len(canonical_demos)):
 
     # demonstrations
     canonical_user_demo = [list(canonical_demos[i])]
-    #visualize_demo(C, canonical_user_demo[0], i)
-    visualize_demo_2(C, canonical_user_demo[0], i, "v2_canonical")
+    visualize_rel_actions(C, canonical_user_demo[0], i, "canonical")
     canonical_trajectories = get_trajectories(C.states, canonical_user_demo, C.transition)
 
     if run_proposed:
@@ -147,7 +146,7 @@ for i in range(len(canonical_demos)):
 
     # demonstrations
     complex_user_demo = [list(complex_demos[i])]
-    visualize_demo_2(X, complex_user_demo[0], i, "v2_complex")
+    visualize_rel_actions(X, complex_user_demo[0], i, "complex")
     complex_trajectories = get_trajectories(X.states, complex_user_demo, X.transition)
 
     # using abstract features

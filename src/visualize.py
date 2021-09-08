@@ -3,7 +3,86 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 
-def visualize_demo_2(task, demo, idx, prefix):
+
+def visualize_rel_actions(task, demo, idx, prefix):
+
+    features, states, transition_function = task.features, task.states, task.transition
+    n_actions, n_steps = len(task.actions), len(demo)
+    s, available_actions = 0, demo.copy()
+    prev_a = -1
+
+    eps = features[:, 0]
+    ems = features[:, 1]
+
+    ep_vals = eps/max(eps)
+    em_vals = ems/max(ems)
+
+    if prefix == "complex":
+        fig_width = 12.75
+    else:
+        fig_width = 6
+
+    sns.set(style="darkgrid", context="talk")
+    fig = plt.figure(figsize=(fig_width, 6))
+    plt.xlabel('Time steps')
+    plt.ylabel('Action')
+
+    # plot user sequence
+    plt.plot(range(len(demo)), demo, "k", zorder=1, alpha=0.27, linewidth=10)
+
+    # plot the features for each action
+    for step, take_action in enumerate(demo):
+        candidates = set()
+        for a in available_actions:
+            p, sp = transition_function(states[s], a)
+            if sp:
+                candidates.add(a)
+
+        if len(candidates) < 1:
+            print("Error: No candidate actions to pick from.")
+
+        for option, curr_a in enumerate(candidates):
+            ep_val = ep_vals[curr_a]
+            em_val = em_vals[curr_a]
+            if prev_a >= 0:
+                p_val = task.part_similarity[prev_a][curr_a]
+                t_val = task.tool_similarity[prev_a][curr_a]
+            else:
+                p_val, t_val = 0.0, 0.0
+
+            marker_shape = "o"
+            if p_val > 0.0:
+                if t_val > 0.0:
+                    marker_shape = "^"
+                else:
+                    marker_shape = "s"
+            else:
+                if t_val > 0.0:
+                    marker_shape = "d"
+
+            plt.scatter([step], [curr_a], s=400, c=[[ep_val, em_val, 0.0]], marker=marker_shape, zorder=2, alpha=0.97,
+                        linewidth=0.0)
+
+        p, sp = transition_function(states[s], take_action)
+        s = states.index(sp)
+        available_actions.remove(take_action)
+        prev_a = take_action
+
+    # add_marker_legend()
+    plt.title(prefix + " task")
+    plt.xlim(-0.5, n_steps - 0.5)
+    plt.ylim(-0.5, n_actions - 0.5)
+    plt.xticks(range(n_steps))
+    plt.gcf().subplots_adjust(bottom=0.15)
+
+    # plt.show()
+    plt.savefig("visualizations/"+prefix+"_user" + str(idx) + ".jpg", bbox_inches='tight')
+    # print("visualizations/"+prefix+"_user" + str(idx) + ".jpg"+" finished")
+
+    return
+
+
+def visualize_rel_candidates(task, demo, idx, prefix):
 
     features, states, transition_function = task.features, task.states, task.transition
     # features = list((np.array(features) - 1.0) / (7.0 - 1.0))
@@ -16,12 +95,10 @@ def visualize_demo_2(task, demo, idx, prefix):
     plt.ylabel('Action index')
 
     for step, take_action in enumerate(demo):
-        #candidates = []
         candidates = set()
         for a in available_actions:
             p, sp = transition_function(states[s], a)
             if sp:
-                #candidates.append(a)
                 candidates.add(a)
 
         if len(candidates) < 1:
@@ -58,7 +135,6 @@ def visualize_demo_2(task, demo, idx, prefix):
                 if t_val>0.0:
                     marker_shape = "d"
 
-
             plt.scatter([step], [curr_a], s=100, c=[[r_val, b_val, 0.0]], marker=marker_shape)
             if curr_a == take_action:
                 if "complex" in prefix:
@@ -71,130 +147,45 @@ def visualize_demo_2(task, demo, idx, prefix):
         available_actions.remove(take_action)
         prev_a = take_action
 
-    add_marker_legend()
-    add_color_legend(fig)
+    plt.ylim(-0.5, len(task.actions) - 0.5)
+    plt.gcf().subplots_adjust(bottom=0.15)
 
-    plt.savefig("visualizations/"+prefix+"_user" + str(idx) + ".jpg", bbox_inches='tight')
-    print("visualizations/"+prefix+"_user" + str(idx) + ".jpg"+" finished")
-
-    return
-
-def visualize_demo(task, demo, idx):
-
-    features, states, transition_function = task.features, task.states, task.transition
-    # features = list((np.array(features) - 1.0) / (7.0 - 1.0))
-    s, available_actions = 0, demo.copy()
-    prev_a = -1
-
-    sns.set(style="darkgrid", context="talk")
-    plt.figure()
-
-    for step, take_action in enumerate(demo):
-        #candidates = []
-        candidates = set()
-        for a in available_actions:
-            p, sp = transition_function(states[s], a)
-            if sp:
-                #candidates.append(a)
-                candidates.add(a)
-
-        if len(candidates) < 1:
-            print("Error: No candidate actions to pick from.")
-
-        eps = [features[curr_a][0] for curr_a in candidates]
-        ems = [features[curr_a][1] for curr_a in candidates]
-        if prev_a >= 0:
-            cps = [task.part_similarity[prev_a][curr_a] for curr_a in candidates]
-            cts = [task.tool_similarity[prev_a][curr_a] for curr_a in candidates]
-        else:
-            cps, cts = [0.0]*len(candidates), [0.0]*len(candidates)
-
-        for option, curr_a in enumerate(candidates):
-            r_val = features[curr_a][0] / max(eps)
-            b_val = features[curr_a][1] / max(ems)
-            if prev_a >= 0 and max(cps) > 0.0:
-                g_val = task.part_similarity[prev_a][curr_a] / max(cps)
-            else:
-                g_val = 0.0
-
-            marker_shape = "o"
-            if g_val > 0.0:
-                marker_shape = "^"
-
-            plt.scatter([step], [option], s=100, c=[[r_val, b_val, 0.0]], marker=marker_shape)
-            if curr_a == take_action:
-                plt.plot([step + 0.2], [option], "r*")
-
-        p, sp = transition_function(states[s], take_action)
-        s = states.index(sp)
-        available_actions.remove(take_action)
-        prev_a = take_action
-
-    plt.savefig("visualizations/complex_user" + str(idx) + ".jpg", bbox_inches='tight')
-    print("visualizations/complex_user" + str(idx) + ".jpg"+" finished")
+    plt.show()
+    # plt.savefig("visualizations/"+prefix+"_user" + str(idx) + ".jpg", bbox_inches='tight')
+    # print("visualizations/"+prefix+"_user" + str(idx) + ".jpg"+" finished")
 
     return
 
 
-def visualize_predictions(qf, states, demos, transition_function, sensitivity=0):
+# Plot heatmap
+sns.set(style="white", context="talk")
+fig = plt.figure(figsize=(2.7, 2.7))
+x = np.linspace(0.0, 1.0, 10)
+y = np.linspace(0.0, 1.0, 10)
+c = [[x_val, y_val, 0.0] for y_val in y for x_val in x]
+x, y = np.meshgrid(x, y)
+plt.axis('equal')
+plt.xticks([0, 1])
+plt.yticks([0, 1])
+plt.xlabel('Physical Effort')
+plt.ylabel('Mental Effort')
+plt.scatter(x, y, s=200, c=c, marker='s', linewidth=0.0, alpha=0.97)
+plt.gcf().subplots_adjust(bottom=0.25)
+plt.gcf().subplots_adjust(left=0.25)
+# plt.savefig("visualizations/heatmap.jpg")
+# plt.show()
 
-    demo = demos[0]
-    s, available_actions = 0, demo.copy()
-
-    generated_sequence, scores = [], []
-    for take_action in demo:
-        max_action_val = -np.inf
-        candidates = []
-        for a in available_actions:
-            p, sp = transition_function(states[s], a)
-            if sp:
-                if qf[s][a] > (1 + sensitivity) * max_action_val:
-                    candidates = [a]
-                    max_action_val = qf[s][a]
-                elif (1 - sensitivity) * max_action_val <= qf[s][a] <= (1 + sensitivity) * max_action_val:
-                    candidates.append(a)
-                    max_action_val = qf[s][a]
-
-        if len(candidates) > 1:
-            predict_iters = 1000
-        elif len(candidates) == 1:
-            predict_iters = 1
-        else:
-            print("Error: No candidate actions to pick from.")
-
-        predict_score = []
-        for _ in range(predict_iters):
-            predict_action = np.random.choice(candidates)
-            predict_score.append(predict_action == take_action)
-        score = np.mean(predict_score)
-        scores.append(score)
-
-        generated_sequence.append(predict_action)
-        p, sp = transition_function(states[s], take_action)
-        s = states.index(sp)
-        available_actions.remove(take_action)
-
-    return generated_sequence, scores
-
-def add_color_legend(fig):
-        x = np.linspace(0.0, 1.0, 100)
-        y = np.linspace(0.0, 1.0, 100)
-        c = [[x_val, y_val, 0.0] for y_val in y for x_val in x]
-        x, y = np.meshgrid(x, y)
-        
-        ax = fig.add_axes([1, 0.6, 0.1, 0.2])
-        ax.set_xlabel('Physical Effort')
-        ax.set_ylabel('Mental Effort')
-        ax.scatter(x, y, s=1, c=c, marker='s')
-
-def add_marker_legend():
-    no = mlines.Line2D([], [], color='blue', marker='o', linestyle='None',
-                          markersize=10, label='No Similarity')
-    tool = mlines.Line2D([], [], color='blue', marker='d', linestyle='None',
-                            markersize=10, label='Similar Tool')
-    part = mlines.Line2D([], [], color='blue', marker='s', linestyle='None',
-                            markersize=10, label='Similar Part')
-    part_and_tool = mlines.Line2D([], [], color='blue', marker='^', linestyle='None',
-                            markersize=10, label='Similar Part and Tool')
-
-    plt.legend(handles=[part_and_tool, part, tool, no], bbox_to_anchor=(1,0), loc="lower left")
+# plot legend
+fig = plt.figure(figsize=(2.7, 2.7))
+no = mlines.Line2D([], [], color='k', marker='o', linestyle='None',
+                   markersize=10, label='Not same', alpha=0.72, linewidth=0)
+tool = mlines.Line2D([], [], color='k', marker='d', linestyle='None',
+                     markersize=10, label='Same tool', alpha=0.72, linewidth=0)
+part = mlines.Line2D([], [], color='k', marker='s', linestyle='None',
+                     markersize=10, label='Same part', alpha=0.72, linewidth=0)
+partool = mlines.Line2D([], [], color='k', marker='^', linestyle='None',
+                        markersize=10, label='Same tool & part', alpha=0.72, linewidth=0)
+plt.legend(handles=[partool, part, tool, no], loc="center")
+plt.axis("off")
+# plt.savefig("visualizations/legend.jpg")
+# plt.show()

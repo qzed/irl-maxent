@@ -80,6 +80,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\visualize.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>
