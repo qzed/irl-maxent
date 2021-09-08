@@ -10,7 +10,7 @@ def visualize_demo_2(task, demo, idx, prefix):
     prev_a = -1
 
     sns.set(style="darkgrid", context="talk")
-    plt.figure(figsize=(12,5))
+    fig = plt.figure(figsize=(12,5))
     plt.xlabel('Time steps')
     plt.ylabel('Action index')
 
@@ -69,6 +69,8 @@ def visualize_demo_2(task, demo, idx, prefix):
         s = states.index(sp)
         available_actions.remove(take_action)
         prev_a = take_action
+
+    add_color_legend(fig)
 
     plt.savefig("visualizations/"+prefix+"_user" + str(idx) + ".jpg", bbox_inches='tight')
     print("visualizations/"+prefix+"_user" + str(idx) + ".jpg"+" finished")
@@ -171,3 +173,14 @@ def visualize_predictions(qf, states, demos, transition_function, sensitivity=0)
         available_actions.remove(take_action)
 
     return generated_sequence, scores
+
+def add_color_legend(fig):
+        x = np.linspace(0.0, 1.0, 100)
+        y = np.linspace(0.0, 1.0, 100)
+        c = [[x_val, y_val, 0.0] for y_val in y for x_val in x]
+        x, y = np.meshgrid(x, y)
+        
+        ax = fig.add_axes([1, 0.6, 0.1, 0.2])
+        ax.set_xlabel('Physical Effort')
+        ax.set_ylabel('Mental Effort')
+        ax.scatter(x, y, s=2, c=c, marker='s')
