@@ -2,6 +2,78 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 
+def visualize_demo_2(task, demo, idx, prefix):
+
+    features, states, transition_function = task.features, task.states, task.transition
+    # features = list((np.array(features) - 1.0) / (7.0 - 1.0))
+    s, available_actions = 0, demo.copy()
+    prev_a = -1
+
+    sns.set(style="darkgrid", context="talk")
+    plt.figure(figsize=(12,5))
+    plt.xlabel('Time steps')
+    plt.ylabel('Action index')
+
+    for step, take_action in enumerate(demo):
+        #candidates = []
+        candidates = set()
+        for a in available_actions:
+            p, sp = transition_function(states[s], a)
+            if sp:
+                #candidates.append(a)
+                candidates.add(a)
+
+        if len(candidates) < 1:
+            print("Error: No candidate actions to pick from.")
+
+        eps = [features[curr_a][0] for curr_a in candidates]
+        ems = [features[curr_a][1] for curr_a in candidates]
+        if prev_a >= 0:
+            cps = [task.part_similarity[prev_a][curr_a] for curr_a in candidates]
+            cts = [task.tool_similarity[prev_a][curr_a] for curr_a in candidates]
+        else:
+            cps, cts = [0.0]*len(candidates), [0.0]*len(candidates)
+
+        for option, curr_a in enumerate(candidates):
+            r_val = features[curr_a][0] / max(eps)
+            b_val = features[curr_a][1] / max(ems)
+            if prev_a >= 0 and max(cps) > 0.0:
+                g_val = task.part_similarity[prev_a][curr_a] / max(cps)
+            else:
+                g_val = 0.0
+
+            if prev_a >= 0 and max(cts) > 0.0:
+                t_val = task.tool_similarity[prev_a][curr_a] / max(cts)
+            else:
+                t_val = 0.0
+
+            marker_shape = "o"
+            if g_val > 0.0:
+                if t_val > 0.0:
+                    marker_shape = "^"
+                else:
+                    marker_shape = "s"
+            else:
+                if t_val>0.0:
+                    marker_shape = "d"
+
+
+            plt.scatter([step], [curr_a], s=100, c=[[r_val, b_val, 0.0]], marker=marker_shape)
+            if curr_a == take_action:
+                if "complex" in prefix:
+                    plt.plot([step + 0.4], [curr_a], "r*")
+                else:
+                    plt.plot([step + 0.1], [curr_a], "r*")
+
+        p, sp = transition_function(states[s], take_action)
+        s = states.index(sp)
+        available_actions.remove(take_action)
+        prev_a = take_action
+
+    plt.savefig("visualizations/"+prefix+"_user" + str(idx) + ".jpg", bbox_inches='tight')
+    print("visualizations/"+prefix+"_user" + str(idx) + ".jpg"+" finished")
+
+    return
 
 def visualize_demo(task, demo, idx):
 
@@ -14,11 +86,13 @@ def visualize_demo(task, demo, idx):
     plt.figure()
 
     for step, take_action in enumerate(demo):
-        candidates = []
+        #candidates = []
+        candidates = set()
         for a in available_actions:
             p, sp = transition_function(states[s], a)
             if sp:
-                candidates.append(a)
+                #candidates.append(a)
+                candidates.add(a)
 
         if len(candidates) < 1:
             print("Error: No candidate actions to pick from.")
@@ -52,7 +126,8 @@ def visualize_demo(task, demo, idx):
         available_actions.remove(take_action)
         prev_a = take_action
 
-    plt.savefig("visualizations/user" + str(idx) + ".jpg", bbox_inches='tight')
+    plt.savefig("visualizations/complex_user" + str(idx) + ".jpg", bbox_inches='tight')
+    print("visualizations/complex_user" + str(idx) + ".jpg"+" finished")
 
     return
 
