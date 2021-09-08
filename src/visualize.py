@@ -1,6 +1,7 @@
 import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
+import matplotlib.lines as mlines
 
 def visualize_demo_2(task, demo, idx, prefix):
 
@@ -70,6 +71,7 @@ def visualize_demo_2(task, demo, idx, prefix):
         available_actions.remove(take_action)
         prev_a = take_action
 
+    add_marker_legend()
     add_color_legend(fig)
 
     plt.savefig("visualizations/"+prefix+"_user" + str(idx) + ".jpg", bbox_inches='tight')
@@ -183,4 +185,16 @@ def add_color_legend(fig):
         ax = fig.add_axes([1, 0.6, 0.1, 0.2])
         ax.set_xlabel('Physical Effort')
         ax.set_ylabel('Mental Effort')
-        ax.scatter(x, y, s=2, c=c, marker='s')
+        ax.scatter(x, y, s=1, c=c, marker='s')
+
+def add_marker_legend():
+    no = mlines.Line2D([], [], color='blue', marker='o', linestyle='None',
+                          markersize=10, label='No Similarity')
+    tool = mlines.Line2D([], [], color='blue', marker='d', linestyle='None',
+                            markersize=10, label='Similar Tool')
+    part = mlines.Line2D([], [], color='blue', marker='s', linestyle='None',
+                            markersize=10, label='Similar Part')
+    part_and_tool = mlines.Line2D([], [], color='blue', marker='^', linestyle='None',
+                            markersize=10, label='Similar Part and Tool')
+
+    plt.legend(handles=[part_and_tool, part, tool, no], bbox_to_anchor=(1,0), loc="lower left")
