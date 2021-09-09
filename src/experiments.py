@@ -79,14 +79,14 @@ scale_weights = False
 
 visualize = True
 
-run_proposed = False
-run_random_baseline = True
+run_proposed = True
+run_random_baseline = False
 
 match_scores, predict_scores, random_scores = [], [], []
 
 # loop over all users
 for i in range(len(canonical_demos)):
-
+    i = 1
     print("=======================")
     print("User:", i)
 

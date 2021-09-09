@@ -22,13 +22,13 @@ def visualize_rel_actions(task, demo, idx, prefix, predictions=None):
     else:
         fig_width = 6
 
-    sns.set(style="darkgrid", context="talk")
-    fig = plt.figure(figsize=(fig_width, 6))
+    sns.set(style="darkgrid", context="talk", rc={'axes.facecolor': '0.93'})
+    plt.figure(figsize=(fig_width, 6))
     plt.xlabel('Time steps')
     plt.ylabel('Action')
 
     # plot user sequence
-    plt.plot(range(len(demo)), demo, "k", zorder=1, alpha=0.27, linewidth=10)
+    plt.plot(range(len(demo)), demo, "k", zorder=1, alpha=0.23, linewidth=10)
     feat_order = 2
 
     # plot the features for each action
@@ -37,9 +37,9 @@ def visualize_rel_actions(task, demo, idx, prefix, predictions=None):
         # plot predictions
         if predictions:
             pred_a = list(set(predictions[step]))
-            plt.scatter([step] * len(pred_a), pred_a, s=800, c=[[0.0, 0.0, 1.0]], marker="o", zorder=2, alpha=0.27,
-                        linewidth=0.0)
-
+            scat = plt.scatter([step] * len(pred_a), pred_a, s=1100, facecolor=(0, 0, 1, 0.23), label="Prediction",
+                               edgecolors=(0, 0, 0.1, 0.23), marker="o", zorder=2, linewidth=0.0)
+            plt.legend(handles=[scat])
             feat_order = 3
 
         candidates = set()
@@ -167,35 +167,43 @@ def visualize_rel_candidates(task, demo, idx, prefix):
     return
 
 
-# Plot heatmap
-sns.set(style="white", context="talk")
-fig = plt.figure(figsize=(2.7, 2.7))
-x = np.linspace(0.0, 1.0, 10)
-y = np.linspace(0.0, 1.0, 10)
-c = [[x_val, y_val, 0.0] for y_val in y for x_val in x]
-x, y = np.meshgrid(x, y)
-plt.axis('equal')
-plt.xticks([0, 1])
-plt.yticks([0, 1])
-plt.xlabel('Physical Effort')
-plt.ylabel('Mental Effort')
-plt.scatter(x, y, s=200, c=c, marker='s', linewidth=0.0, alpha=0.97)
-plt.gcf().subplots_adjust(bottom=0.25)
-plt.gcf().subplots_adjust(left=0.25)
-# plt.savefig("visualizations/heatmap.jpg")
-# plt.show()
+# # Plot heatmap
+# sns.set(style="white", context="talk")
+# fig = plt.figure(figsize=(2.7, 2.7))
+# x = np.linspace(0.0, 1.0, 10)
+# y = np.linspace(0.0, 1.0, 10)
+# c = [[x_val, y_val, 0.0] for y_val in y for x_val in x]
+# x, y = np.meshgrid(x, y)
+# plt.axis('equal')
+# plt.xticks([0, 1])
+# plt.yticks([0, 1])
+# plt.xlabel('Physical Effort')
+# plt.ylabel('Mental Effort')
+# plt.scatter(x, y, s=200, c=c, marker='s', linewidth=0.0, alpha=0.97)
+# plt.gcf().subplots_adjust(bottom=0.25)
+# plt.gcf().subplots_adjust(left=0.25)
+# # plt.savefig("visualizations/heatmap.jpg")
+# # plt.show()
+#
+# # plot legend
+# fig = plt.figure(figsize=(2.7, 2.7))
+# no = mlines.Line2D([], [], color='k', marker='o', linestyle='None',
+#                    markersize=10, label='Not same', alpha=0.72, linewidth=0)
+# tool = mlines.Line2D([], [], color='k', marker='d', linestyle='None',
+#                      markersize=10, label='Same tool', alpha=0.72, linewidth=0)
+# part = mlines.Line2D([], [], color='k', marker='s', linestyle='None',
+#                      markersize=10, label='Same part', alpha=0.72, linewidth=0)
+# partool = mlines.Line2D([], [], color='k', marker='^', linestyle='None',
+#                         markersize=10, label='Same tool & part', alpha=0.72, linewidth=0)
+# plt.legend(handles=[partool, part, tool, no], loc="center")
+# plt.axis("off")
+# # plt.savefig("visualizations/legend.jpg")
+# # plt.show()
 
 # plot legend
-fig = plt.figure(figsize=(2.7, 2.7))
-no = mlines.Line2D([], [], color='k', marker='o', linestyle='None',
-                   markersize=10, label='Not same', alpha=0.72, linewidth=0)
-tool = mlines.Line2D([], [], color='k', marker='d', linestyle='None',
-                     markersize=10, label='Same tool', alpha=0.72, linewidth=0)
-part = mlines.Line2D([], [], color='k', marker='s', linestyle='None',
-                     markersize=10, label='Same part', alpha=0.72, linewidth=0)
-partool = mlines.Line2D([], [], color='k', marker='^', linestyle='None',
-                        markersize=10, label='Same tool & part', alpha=0.72, linewidth=0)
-plt.legend(handles=[partool, part, tool, no], loc="center")
+fig = plt.figure()
+proposed = mlines.Line2D([], [], markerfacecolor='b', marker='o', linestyle='None', markeredgecolor=(0, 0, 0.1, 0.23),
+                         markersize=15, alpha=0.23, label='Prediction', linewidth=0)
+plt.legend(handles=[proposed], loc="center", fontsize=18)
 plt.axis("off")
-# plt.savefig("visualizations/legend.jpg")
-# plt.show()
+plt.savefig("visualizations/legend2.jpg")
