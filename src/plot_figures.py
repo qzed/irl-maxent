@@ -4,10 +4,10 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 
-predict_scores = np.loadtxt("results_new_vi/predict11_normalized_features.csv")
-random1_scores = np.loadtxt("results_new_vi/random11_normalized_features_random_weights.csv")
+predict_scores = np.loadtxt("results_final/predict11_normalized_features.csv")
+random1_scores = np.loadtxt("results_final/random11_normalized_features_random_weights.csv")
 random2_scores = np.loadtxt("results/random11.csv")
-uniform_scores = np.loadtxt("results_new_vi/predict11_normalized_features_uniform_weights.csv")
+uniform_scores = np.loadtxt("results_final/predict11_normalized_features.csv")
 
 n_users, n_steps = np.shape(predict_scores)
 
@@ -15,7 +15,7 @@ n_users, n_steps = np.shape(predict_scores)
 predict_users = list(np.sum(predict_scores, axis=1)/n_steps)
 random1_users = list(np.sum(random1_scores, axis=1)/n_steps)
 random2_users = list(np.sum(random2_scores, axis=1)/n_steps)
-uniform_users = list(uniform_scores[:, 0])
+uniform_users = list(np.sum(uniform_scores, axis=1)/n_steps)
 print("Random action:", stats.ttest_rel(predict_users, random1_users))
 print("Random weights:", stats.ttest_rel(predict_users, random2_users))
 print("Uniform weights:", stats.ttest_rel(predict_users, uniform_users))

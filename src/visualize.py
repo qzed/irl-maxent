@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 
 
-def visualize_rel_actions(task, demo, idx, prefix):
+def visualize_rel_actions(task, demo, idx, prefix, predictions=None):
 
     features, states, transition_function = task.features, task.states, task.transition
     n_actions, n_steps = len(task.actions), len(demo)
@@ -29,9 +29,19 @@ def visualize_rel_actions(task, demo, idx, prefix):
 
     # plot user sequence
     plt.plot(range(len(demo)), demo, "k", zorder=1, alpha=0.27, linewidth=10)
+    feat_order = 2
 
     # plot the features for each action
     for step, take_action in enumerate(demo):
+
+        # plot predictions
+        if predictions:
+            pred_a = list(set(predictions[step]))
+            plt.scatter([step] * len(pred_a), pred_a, s=800, c=[[0.0, 0.0, 1.0]], marker="o", zorder=2, alpha=0.27,
+                        linewidth=0.0)
+
+            feat_order = 3
+
         candidates = set()
         for a in available_actions:
             p, sp = transition_function(states[s], a)
@@ -60,8 +70,8 @@ def visualize_rel_actions(task, demo, idx, prefix):
                 if t_val > 0.0:
                     marker_shape = "d"
 
-            plt.scatter([step], [curr_a], s=400, c=[[ep_val, em_val, 0.0]], marker=marker_shape, zorder=2, alpha=0.97,
-                        linewidth=0.0)
+            plt.scatter([step], [curr_a], s=400, c=[[ep_val, em_val, 0.0]], marker=marker_shape, zorder=feat_order,
+                        alpha=0.97, linewidth=0.0)
 
         p, sp = transition_function(states[s], take_action)
         s = states.index(sp)
@@ -76,7 +86,7 @@ def visualize_rel_actions(task, demo, idx, prefix):
     plt.gcf().subplots_adjust(bottom=0.15)
 
     # plt.show()
-    plt.savefig("visualizations/"+prefix+"_user" + str(idx) + ".jpg", bbox_inches='tight')
+    plt.savefig("visualizations/"+prefix+"_user" + str(idx) + "_predictions.jpg", bbox_inches='tight')
     # print("visualizations/"+prefix+"_user" + str(idx) + ".jpg"+" finished")
 
     return

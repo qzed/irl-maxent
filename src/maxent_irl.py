@@ -202,7 +202,7 @@ def predict_trajectory(qf, states, demos, transition_function, sensitivity=0):
     demo = demos[0]
     s, available_actions = 0, demo.copy()
 
-    generated_sequence, scores = [], []
+    predictions, scores = [], []
     for take_action in demo:
         max_action_val = -np.inf
         candidates = []
@@ -216,26 +216,28 @@ def predict_trajectory(qf, states, demos, transition_function, sensitivity=0):
                     candidates.append(a)
                     max_action_val = qf[s][a]
 
+        predictions.append(candidates)
+
         if len(candidates) > 1:
-            predict_iters = 1000
+            predict_iters = 100
         elif len(candidates) == 1:
             predict_iters = 1
         else:
             print("Error: No candidate actions to pick from.")
 
         predict_score = []
+        options = list(set(candidates))
         for _ in range(predict_iters):
-            predict_action = np.random.choice(candidates)
+            predict_action = np.random.choice(options)
             predict_score.append(predict_action == take_action)
         score = np.mean(predict_score)
         scores.append(score)
 
-        generated_sequence.append(predict_action)
         p, sp = transition_function(states[s], take_action)
         s = states.index(sp)
         available_actions.remove(take_action)
 
-    return generated_sequence, scores
+    return predictions, scores
 
 
 def random_trajectory(states, demos, transition_function):
