@@ -77,10 +77,10 @@ optim = O.ExpSga(lr=O.linear_decay(lr0=0.6))
 rank_features = False
 scale_weights = False
 
-visualize = True
+visualize = False
 
-run_proposed = True
-run_random_baseline = False
+run_proposed = False
+run_random_baseline = True
 
 match_scores, predict_scores, random_scores = [], [], []
 
@@ -163,7 +163,7 @@ for i in range(len(canonical_demos)):
         # score for predicting the action based on transferred rewards based on abstract features
         qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract, X.terminal_idx)
         predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, complex_user_demo, X.transition,
-                                                             sensitivity=0.0)
+                                                             sensitivity=0.005, consider_options=True)
         predict_scores.append(predict_score)
 
         if visualize:
@@ -191,7 +191,7 @@ for i in range(len(canonical_demos)):
             random_rewards_abstract = complex_abstract_features.dot(random_weights)
             qf_random, _, _ = value_iteration(X.states, X.actions, X.transition, random_rewards_abstract, X.terminal_idx)
             predict_sequence, r_score = predict_trajectory(qf_random, X.states, complex_user_demo, X.transition,
-                                                           sensitivity=0.0)
+                                                           sensitivity=0.005, consider_options=True)
 
             # score for randomly selecting an action
             # _, r_score = random_trajectory(X.states, complex_user_demo, X.transition)
@@ -207,7 +207,7 @@ for i in range(len(canonical_demos)):
 
 # -------------------------------------------------- Save results --------------------------------------------------- #
 if run_proposed:
-    np.savetxt("results_final/predict11_normalized_features.csv", predict_scores)
+    np.savetxt("results_final/predict11_normalized_features_random_weights_options_s005.csv", predict_scores)
 
 if run_random_baseline:
     np.savetxt("results_final/random11_normalized_features_random_weights_new.csv", random_scores)

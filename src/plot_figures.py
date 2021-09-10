@@ -7,7 +7,7 @@ from scipy import stats
 predict_scores = np.loadtxt("results_final/predict11_normalized_features.csv")
 random1_scores = np.loadtxt("results_final/random11_normalized_features_random_weights.csv")
 random2_scores = np.loadtxt("results_final/random11_normalized_features_random_actions.csv")
-uniform_scores = np.loadtxt("results_final/random11_normalized_features_random_weights_new.csv")
+uniform_scores = np.loadtxt("results_final/predict11_normalized_features_random_weights_options_s005.csv")
 
 n_users, n_steps = np.shape(predict_scores)
 

@@ -229,7 +229,7 @@ def predict_trajectory(qf, states, demos, transition_function, sensitivity=0, co
 
         predict_score = []
         options = list(set(candidates))
-        applicants = list(set(candidates))
+        applicants = list(set(applicants))
 
         if consider_options and (len(options) < len(applicants)):
             score = take_action in options
