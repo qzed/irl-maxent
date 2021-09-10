@@ -132,7 +132,7 @@ class CanonicalTask(AssemblyTask):
     2 - insert wire (short)
     3 - screw long bolt
     4 - screw short bolt
-    5 - screw wire / insert wire (long)
+    5 - insert wire (long)
 
     feature values for each action = [physical_effort, mental_effort]
     """

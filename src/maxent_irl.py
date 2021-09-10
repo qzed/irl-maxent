@@ -197,7 +197,7 @@ def rollout_trajectory(qf, states, demos, transition_function):
     return generated_sequence
 
 
-def predict_trajectory(qf, states, demos, transition_function, sensitivity=0):
+def predict_trajectory(qf, states, demos, transition_function, sensitivity=0, consider_options=False):
 
     demo = demos[0]
     s, available_actions = 0, demo.copy()
@@ -206,9 +206,11 @@ def predict_trajectory(qf, states, demos, transition_function, sensitivity=0):
     for take_action in demo:
         max_action_val = -np.inf
         candidates = []
+        applicants = []
         for a in available_actions:
             p, sp = transition_function(states[s], a)
             if sp:
+                applicants.append(a)
                 if qf[s][a] > (1 + sensitivity) * max_action_val:
                     candidates = [a]
                     max_action_val = qf[s][a]
@@ -227,10 +229,15 @@ def predict_trajectory(qf, states, demos, transition_function, sensitivity=0):
 
         predict_score = []
         options = list(set(candidates))
-        for _ in range(predict_iters):
-            predict_action = np.random.choice(options)
-            predict_score.append(predict_action == take_action)
-        score = np.mean(predict_score)
+        applicants = list(set(candidates))
+
+        if consider_options and (len(options) < len(applicants)):
+            score = take_action in options
+        else:
+            for _ in range(predict_iters):
+                predict_action = np.random.choice(options)
+                predict_score.append(predict_action == take_action)
+            score = np.mean(predict_score)
         scores.append(score)
 
         p, sp = transition_function(states[s], take_action)
@@ -259,7 +266,8 @@ def random_trajectory(states, demos, transition_function):
         if not candidates:
             print(s)
 
-        predict_action = np.random.choice(candidates)
+        options = list(set(candidates))
+        predict_action = np.random.choice(options)
         score.append(predict_action == take_action)
 
         generated_sequence.append(take_action)

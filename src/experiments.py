@@ -86,7 +86,7 @@ match_scores, predict_scores, random_scores = [], [], []
 
 # loop over all users
 for i in range(len(canonical_demos)):
-    i = 1
+
     print("=======================")
     print("User:", i)
 
@@ -158,12 +158,12 @@ for i in range(len(canonical_demos)):
 
     if run_proposed:
         # transfer rewards to complex task
-        canonical_weights_abstract = np.ones(6)
         transfer_rewards_abstract = complex_abstract_features.dot(canonical_weights_abstract)
 
         # score for predicting the action based on transferred rewards based on abstract features
         qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract, X.terminal_idx)
-        predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, complex_user_demo, X.transition)
+        predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, complex_user_demo, X.transition,
+                                                             sensitivity=0.0)
         predict_scores.append(predict_score)
 
         if visualize:
@@ -190,7 +190,8 @@ for i in range(len(canonical_demos)):
             random_weights = np.random.rand(6)  # np.random.shuffle(canonical_weights_abstract)
             random_rewards_abstract = complex_abstract_features.dot(random_weights)
             qf_random, _, _ = value_iteration(X.states, X.actions, X.transition, random_rewards_abstract, X.terminal_idx)
-            predict_sequence, r_score = predict_trajectory(qf_random, X.states, complex_user_demo, X.transition)
+            predict_sequence, r_score = predict_trajectory(qf_random, X.states, complex_user_demo, X.transition,
+                                                           sensitivity=0.0)
 
             # score for randomly selecting an action
             # _, r_score = random_trajectory(X.states, complex_user_demo, X.transition)
@@ -209,5 +210,5 @@ if run_proposed:
     np.savetxt("results_final/predict11_normalized_features.csv", predict_scores)
 
 if run_random_baseline:
-    np.savetxt("results_final/random11_normalized_features_random_weights.csv", random_scores)
+    np.savetxt("results_final/random11_normalized_features_random_weights_new.csv", random_scores)
 

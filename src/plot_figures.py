@@ -6,8 +6,8 @@ from scipy import stats
 
 predict_scores = np.loadtxt("results_final/predict11_normalized_features.csv")
 random1_scores = np.loadtxt("results_final/random11_normalized_features_random_weights.csv")
-random2_scores = np.loadtxt("results/random11.csv")
-uniform_scores = np.loadtxt("results_final/predict11_normalized_features.csv")
+random2_scores = np.loadtxt("results_final/random11_normalized_features_random_actions.csv")
+uniform_scores = np.loadtxt("results_final/random11_normalized_features_random_weights_new.csv")
 
 n_users, n_steps = np.shape(predict_scores)
 
@@ -16,8 +16,8 @@ predict_users = list(np.sum(predict_scores, axis=1)/n_steps)
 random1_users = list(np.sum(random1_scores, axis=1)/n_steps)
 random2_users = list(np.sum(random2_scores, axis=1)/n_steps)
 uniform_users = list(np.sum(uniform_scores, axis=1)/n_steps)
-print("Random action:", stats.ttest_rel(predict_users, random1_users))
-print("Random weights:", stats.ttest_rel(predict_users, random2_users))
+print("Random weights:", stats.ttest_rel(predict_users, random1_users))
+print("Random actions:", stats.ttest_rel(predict_users, random2_users))
 print("Uniform weights:", stats.ttest_rel(predict_users, uniform_users))
 
 # accuracy at each time steps
@@ -39,7 +39,7 @@ plt.xticks(steps)
 plt.xlabel("Time step")
 plt.ylabel("Accuracy")
 plt.gcf().subplots_adjust(bottom=0.15)
-plt.legend(["proposed", "random weights", "random action", "uniform weights"], loc=4)
+plt.legend(["proposed", "random weights", "random action"], loc=4)
 plt.show()
 # plt.savefig("figures/results11.jpg", bbox_inches='tight')
 
