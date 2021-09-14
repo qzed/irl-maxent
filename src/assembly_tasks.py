@@ -80,6 +80,7 @@ class AssemblyTask:
             c_part, c_tool = 0.0, 0.0
 
         feature_value = np.array([phase * e_p, phase * e_m, (1.0 - phase) * e_p, (1.0 - phase) * e_m, c_part, c_tool])
+        # feature_value = np.array([(1.0 - phase) * e_p, (1.0 - phase) * e_m, c_part, c_tool])
 
         # n_actions, n_features = np.array(action_features).shape
         # feature_value = np.zeros(n_features)

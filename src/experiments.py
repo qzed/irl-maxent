@@ -77,15 +77,15 @@ optim = O.ExpSga(lr=O.linear_decay(lr0=0.6))
 rank_features = False
 scale_weights = False
 
-visualize = False
+visualize = True
 
-run_proposed = False
-run_random_baseline = True
+run_proposed = True
+run_random_baseline = False
 
 match_scores, predict_scores, random_scores = [], [], []
 
 # loop over all users
-for i in range(len(canonical_demos)):
+for i in range(11):
 
     print("=======================")
     print("User:", i)
@@ -163,11 +163,11 @@ for i in range(len(canonical_demos)):
         # score for predicting the action based on transferred rewards based on abstract features
         qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract, X.terminal_idx)
         predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, complex_user_demo, X.transition,
-                                                             sensitivity=0.005, consider_options=True)
+                                                             sensitivity=0.0, consider_options=False)
         predict_scores.append(predict_score)
 
         if visualize:
-            visualize_rel_actions(X, complex_user_demo[0], i, "complex", predict_sequence)
+            visualize_rel_actions(X, complex_user_demo[0], i, "actual", predict_sequence)
 
     # -------------------------------- Training: Learn weights from complex demo ------------------------------------ #
 
@@ -186,29 +186,30 @@ for i in range(len(canonical_demos)):
         print("Assuming random weights ...")
         random_score = []
         for _ in range(100):
-            # score for selecting actions based on random weights
-            random_weights = np.random.rand(6)  # np.random.shuffle(canonical_weights_abstract)
-            random_rewards_abstract = complex_abstract_features.dot(random_weights)
-            qf_random, _, _ = value_iteration(X.states, X.actions, X.transition, random_rewards_abstract, X.terminal_idx)
-            predict_sequence, r_score = predict_trajectory(qf_random, X.states, complex_user_demo, X.transition,
-                                                           sensitivity=0.005, consider_options=True)
+            # # score for selecting actions based on random weights
+            # random_weights = np.random.rand(6)  # np.random.shuffle(canonical_weights_abstract)
+            # random_rewards_abstract = complex_abstract_features.dot(random_weights)
+            # qf_random, _, _ = value_iteration(X.states, X.actions, X.transition, random_rewards_abstract, X.terminal_idx)
+            # predict_sequence, r_score = predict_trajectory(qf_random, X.states, complex_user_demo, X.transition,
+            #                                                sensitivity=0.0, consider_options=False)
 
             # score for randomly selecting an action
-            # _, r_score = random_trajectory(X.states, complex_user_demo, X.transition)
+            predict_sequence, r_score = random_trajectory(X.states, complex_user_demo, X.transition)
 
             random_score.append(r_score)
 
         random_score = np.mean(random_score, axis=0)
         random_scores.append(random_score)
 
-    # print("\n")
-    # print("Complex task:")
-    # print("     demonstration -", complex_user_demo)
+    print("\n")
+    print("Complex task:")
+    print("   demonstration -", complex_user_demo)
+    print("     predictions -", predict_sequence)
 
 # -------------------------------------------------- Save results --------------------------------------------------- #
 if run_proposed:
-    np.savetxt("results_final/predict11_normalized_features_random_weights_options_s005.csv", predict_scores)
+    np.savetxt("results_final/predict11_normalized_features.csv", predict_scores)
 
 if run_random_baseline:
-    np.savetxt("results_final/random11_normalized_features_random_weights_new.csv", random_scores)
+    np.savetxt("results_final/random11_normalized_features_random_actions_new.csv", random_scores)
 

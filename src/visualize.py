@@ -17,7 +17,7 @@ def visualize_rel_actions(task, demo, idx, prefix, predictions=None):
     ep_vals = eps/max(eps)
     em_vals = ems/max(ems)
 
-    if prefix == "complex":
+    if prefix == "actual":
         fig_width = 12.75
     else:
         fig_width = 6

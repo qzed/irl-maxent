@@ -268,7 +268,11 @@ def random_trajectory(states, demos, transition_function):
 
         options = list(set(candidates))
         predict_action = np.random.choice(options)
-        score.append(predict_action == take_action)
+        if take_action in options:
+            acc = 1/len(options)
+        else:
+            acc = 0.0
+        score.append(acc)
 
         generated_sequence.append(take_action)
         p, sp = transition_function(states[s], take_action)
