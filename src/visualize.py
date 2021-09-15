@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 
 
-def visualize_rel_actions(task, demo, idx, prefix, predictions=None):
+def visualize_rel_actions(task, demo, idx, prefix, predictions=None, ):
 
     features, states, transition_function = task.features, task.states, task.transition
     n_actions, n_steps = len(task.actions), len(demo)
