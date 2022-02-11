@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 
 
-def visualize_rel_actions(task, demo, idx, prefix, predictions=None, ):
+def visualize_rel_actions(task, demo, idx, prefix, predictions=None, user_demo=None):
 
     features, states, transition_function = task.features, task.states, task.transition
     n_actions, n_steps = len(task.actions), len(demo)
@@ -31,15 +31,26 @@ def visualize_rel_actions(task, demo, idx, prefix, predictions=None, ):
     plt.plot(range(len(demo)), demo, "k", zorder=1, alpha=0.23, linewidth=10)
     feat_order = 2
 
+    incorrect_scat = []
     # plot the features for each action
     for step, take_action in enumerate(demo):
 
         # plot predictions
         if predictions:
             pred_a = list(set(predictions[step]))
-            scat = plt.scatter([step] * len(pred_a), pred_a, s=1100, facecolor=(0, 0, 1, 0.23), label="Prediction",
+            truth = user_demo[step]
+            if pred_a[0] == truth:
+                pred_color = (0, 1, 0.25, 0.35)
+                pred_label = "correct prediction"
+            else:
+                pred_color = (1, 0, 0.25, 0.35)
+                pred_label = "incorrect prediction"
+            scat = plt.scatter([step] * len(pred_a), pred_a, s=1200, facecolor=pred_color, label=pred_label,
                                edgecolors=(0, 0, 0.1, 0.23), marker="o", zorder=2, linewidth=0.0)
-            plt.legend(handles=[scat])
+
+            if pred_label == "incorrect prediction":
+                incorrect_scat.append(scat)
+            # plt.legend(handles=[scat], loc=4)
             feat_order = 3
 
         candidates = set()
@@ -84,6 +95,7 @@ def visualize_rel_actions(task, demo, idx, prefix, predictions=None, ):
     plt.ylim(-0.5, n_actions - 0.5)
     plt.xticks(range(n_steps))
     plt.gcf().subplots_adjust(bottom=0.15)
+    plt.legend(handles=[scat, incorrect_scat[0]], loc=4, labelspacing=1.3, borderpad=0.7, bbox_to_anchor=(1.01, -0.02))
 
     # plt.show()
     plt.savefig("visualizations/"+prefix+"_user" + str(idx) + "_predictions.jpg", bbox_inches='tight')
@@ -167,24 +179,58 @@ def visualize_rel_candidates(task, demo, idx, prefix):
     return
 
 
-# # Plot heatmap
-# sns.set(style="white", context="talk")
-# fig = plt.figure(figsize=(2.7, 2.7))
-# x = np.linspace(0.0, 1.0, 10)
-# y = np.linspace(0.0, 1.0, 10)
-# c = [[x_val, y_val, 0.0] for y_val in y for x_val in x]
-# x, y = np.meshgrid(x, y)
-# plt.axis('equal')
-# plt.xticks([0, 1])
-# plt.yticks([0, 1])
-# plt.xlabel('Physical Effort')
-# plt.ylabel('Mental Effort')
-# plt.scatter(x, y, s=200, c=c, marker='s', linewidth=0.0, alpha=0.97)
-# plt.gcf().subplots_adjust(bottom=0.25)
-# plt.gcf().subplots_adjust(left=0.25)
-# # plt.savefig("visualizations/heatmap.jpg")
-# # plt.show()
-#
+# Plot heatmap
+
+fea = [[1.1, 1.1],
+       [1.1, 1.1],
+       [2. , 2. ],
+       [2. , 2. ],
+       [6. , 3. ],
+       [6. , 3. ],
+       [6.9, 4. ],
+       [3. , 2. ]]
+fea = np.array(fea)/np.max(fea, axis=0)
+ts = ['0', '1', '2', '3', '4', '5', '6', '7']
+fea_lst = list(fea)
+
+strs = []
+fea_pts = []
+for idx, act in enumerate(fea_lst):
+    act = list(act)
+    if act in fea_pts:
+        pidx = fea_pts.index(act)
+        strs[pidx] = strs[pidx] + "," + str(idx)
+    else:
+        fea_pts.append(act)
+        strs.append(str(idx))
+fea_pts = np.array(fea_pts)
+
+sns.set(style="white", context="talk")
+fig = plt.figure(figsize=(2.7, 2.7))
+x = np.linspace(0.0, 1.0, 10)
+y = np.linspace(0.0, 1.0, 10)
+c = [[x_val, y_val, 0.0] for y_val in y for x_val in x]
+x, y = np.meshgrid(x, y)
+plt.axis('equal')
+plt.xticks([0, 1])
+plt.yticks([0, 1])
+plt.xlabel('Physical Effort')
+plt.ylabel('Mental Effort')
+plt.scatter(x, y, s=200, c=c, marker='s', linewidth=0.0, alpha=0.97)
+plt.scatter(fea[:, 0], fea[:, 1], s=80, c='k', marker='o', linewidth=0.0, alpha=0.79)
+for idx, s in enumerate(fea_pts):
+    if len(strs[idx]) > 1:
+        x_offset = -0.11
+        y_offset = 0.07
+    else:
+        x_offset = 0.06
+        y_offset = -0.02
+    plt.text(fea_pts[idx, 0]+x_offset, fea_pts[idx, 1]+y_offset, strs[idx], c='k')
+plt.gcf().subplots_adjust(bottom=0.25)
+plt.gcf().subplots_adjust(left=0.25)
+plt.savefig("visualizations/heatmap_user9_complex.jpg")
+# plt.show()
+
 # # plot legend
 # fig = plt.figure(figsize=(2.7, 2.7))
 # no = mlines.Line2D([], [], color='k', marker='o', linestyle='None',
@@ -200,10 +246,10 @@ def visualize_rel_candidates(task, demo, idx, prefix):
 # # plt.savefig("visualizations/legend.jpg")
 # # plt.show()
 
-# plot legend
-fig = plt.figure()
-proposed = mlines.Line2D([], [], markerfacecolor='b', marker='o', linestyle='None', markeredgecolor=(0, 0, 0.1, 0.23),
-                         markersize=15, alpha=0.23, label='Prediction', linewidth=0)
-plt.legend(handles=[proposed], loc="center", fontsize=18)
-plt.axis("off")
-plt.savefig("visualizations/legend2.jpg")
+# # plot legend
+# fig = plt.figure()
+# proposed = mlines.Line2D([], [], markerfacecolor='b', marker='o', linestyle='None', markeredgecolor=(0, 0, 0.1, 0.23),
+#                          markersize=15, alpha=0.23, label='Prediction', linewidth=0)
+# plt.legend(handles=[proposed], loc="center", fontsize=18)
+# plt.axis("off")
+# plt.savefig("visualizations/legend2.jpg")
