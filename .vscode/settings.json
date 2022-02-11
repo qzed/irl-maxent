@@ -1,6 +1,0 @@
-{
-    "python.linting.pep8Args": [
-        "--max-line-length=105",
-        "--ignore=E731,E741",
-    ]
-}
