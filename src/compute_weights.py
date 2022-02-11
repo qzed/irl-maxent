@@ -1,4 +1,5 @@
 # import python libraries
+import os
 import pdb
 import numpy as np
 from copy import deepcopy
@@ -16,13 +17,11 @@ from import_qualtrics import get_qualtrics_survey
 
 # download data from qualtrics
 learning_survey_id = "SV_8eoX63z06ZhVZRA"
-get_qualtrics_survey(dir_save_survey="", survey_id=learning_survey_id)
-
-# paths
-data_path = "/home/heramb/Git/irl-maxent/src/Human-Robot Assembly - Learning.csv"
-save_path = "/home/heramb/ros_ws/src/assembly_demos/data/"
+data_path = os.path.dirname(__file__) + "/data/"
+get_qualtrics_survey(dir_save_survey=data_path, survey_id=learning_survey_id)
 
 # load user data
+data_path = data_path + "Human-Robot Assembly - Learning.csv"
 df = pd.read_csv(data_path)
 
 
@@ -49,6 +48,7 @@ def load_features(data, user_idx, feature_idx, action_idx):
             fea_vec.append(fea_val)
         fea_mat.append(fea_vec)
     return fea_mat
+
 
 # ----------------------------------------------- Optimization -------------------------------------------------- #
 
@@ -111,8 +111,14 @@ if scale_weights:
     canonical_weights_abstract /= max(canonical_weights_abstract)
 
 # ----------------------------------------- Testing: Predict complex -------------------------------------------- #
-
 sample_complex_demo = [1, 3, 5, 0, 2, 2, 2, 2, 4, 4, 4, 4, 6, 6, 6, 6, 7]
+
+complex_survey_actions = [0, 4, 1, 5, 6, 7, 2, 3]
+action_counts = [1, 1, 4, 1, 4, 1, 4, 1]
+preferred_order = [df[q][idx] for q in ['Q15_1', 'Q15_2', 'Q15_3', 'Q15_4', 'Q15_5', 'Q15_6', 'Q15_7', 'Q15_8']]
+complex_demo = []
+for _, a in sorted(zip(preferred_order, complex_survey_actions)):
+    complex_demo += [a]*action_counts[a]
 
 # initialize complex task
 X = ComplexTask(complex_features)
@@ -131,7 +137,10 @@ transfer_rewards_abstract = complex_abstract_features.dot(canonical_weights_abst
 
 # score for predicting the action based on transferred rewards based on abstract features
 qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract, X.terminal_idx)
+predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, [complex_demo], X.transition,
+                                                             sensitivity=0.0, consider_options=False)
 
-pickle.dump(qf_transfer, open(save_path + "q_values_" + user_id + ".p", "wb"))
-pickle.dump(X.states, open(save_path + "states_" + user_id + ".p", "wb"))
-print("Q-values have been saved for the actual task!")
+save_path = "/home/heramb/ros_ws/src/assembly_demos/data/"
+# pickle.dump(qf_transfer, open(save_path + "q_values_" + user_id + ".p", "wb"))
+# pickle.dump(X.states, open(save_path + "states_" + user_id + ".p", "wb"))
+# print("Q-values have been saved for the actual task!")
