@@ -58,7 +58,7 @@ def load_features(data, feature_idx, action_idx):
 
 
 # user ratings for features
-canonical_q, complex_q = ["Q7_", "Q8_"], ["Q14_", "Q15_"]  # ["Q6_", "Q7_", "Q8_"], ["Q13_", "Q14_", "Q15_"]
+canonical_q, complex_q = ["Q7_", "Q8_"], ["Q14_", "Q15_"]
 canonical_features = load_features(ratings_df, canonical_q, [1, 3, 5, 2, 4, 6])
 complex_features = load_features(ratings_df, complex_q, [1, 3, 7, 8, 2, 4, 5, 6])
 
@@ -85,7 +85,7 @@ run_random_baseline = False
 match_scores, predict_scores, random_scores = [], [], []
 
 # loop over all users
-for i in range(11):
+for i in [9, 10]:
 
     print("=======================")
     print("User:", i)
@@ -167,7 +167,7 @@ for i in range(11):
         predict_scores.append(predict_score)
 
         if visualize:
-            visualize_rel_actions(X, complex_user_demo[0], i, "actual", predict_sequence)
+            visualize_rel_actions(X, complex_user_demo[0], i, "actual", predict_sequence, complex_user_demo[0])
 
     # -------------------------------- Training: Learn weights from complex demo ------------------------------------ #
 
