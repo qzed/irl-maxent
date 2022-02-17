@@ -18,11 +18,11 @@ from import_qualtrics import get_qualtrics_survey
 # download data from qualtrics
 learning_survey_id = "SV_8eoX63z06ZhVZRA"
 data_path = os.path.dirname(__file__) + "/data/"
-get_qualtrics_survey(dir_save_survey=data_path, survey_id=learning_survey_id)
+# get_qualtrics_survey(dir_save_survey=data_path, survey_id=learning_survey_id)
 
 # load user data
-data_path = data_path + "Human-Robot Assembly - Learning.csv"
-df = pd.read_csv(data_path)
+demo_path = data_path + "Human-Robot Assembly - Learning.csv"
+df = pd.read_csv(demo_path)
 
 
 # pre-process feature value
@@ -135,12 +135,17 @@ complex_abstract_features /= np.linalg.norm(complex_abstract_features, axis=0)
 # transfer rewards to complex task
 transfer_rewards_abstract = complex_abstract_features.dot(canonical_weights_abstract)
 
-# score for predicting the action based on transferred rewards based on abstract features
+# compute q-values for each state based on learned weights
 qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract, X.terminal_idx)
+
+# score for predicting the action based on transferred rewards based on abstract features
 predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, [complex_demo], X.transition,
                                                              sensitivity=0.0, consider_options=False)
 
-save_path = "/home/heramb/ros_ws/src/assembly_demos/data/"
+print("canonical : ", canonical_demo)
+print("preference: ", complex_demo)
+print("prediction: ", predict_sequence)
+# save_path = data_path + "learned_models/"
 # pickle.dump(qf_transfer, open(save_path + "q_values_" + user_id + ".p", "wb"))
 # pickle.dump(X.states, open(save_path + "states_" + user_id + ".p", "wb"))
-# print("Q-values have been saved for the actual task!")
+# print("Q-values have been saved for user " + user_id + ".")

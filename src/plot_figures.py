@@ -1,13 +1,16 @@
+import os
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 
-predict_scores = np.loadtxt("results_final/predict11_normalized_features.csv")
-random1_scores = np.loadtxt("results_final/random11_normalized_features_random_weights.csv")
-random2_scores = np.loadtxt("results_final/random11_normalized_features_random_actions_new.csv")
-uniform_scores = np.loadtxt("results_final/random11_normalized_features_random_actions_new.csv")
+file_path = os.path.dirname(__file__) + '/results/study_hr/'
+
+predict_scores = np.loadtxt(file_path + "predict.csv")
+random1_scores = np.loadtxt(file_path + "random_weights.csv")
+random2_scores = np.loadtxt(file_path + "random.csv")
+uniform_scores = np.loadtxt(file_path + "predict_complex.csv")
 
 n_users, n_steps = np.shape(predict_scores)
 
@@ -33,16 +36,16 @@ plt.figure(figsize=(10, 5))
 plt.plot(steps, random2_accuracy, 'r--', linewidth=3.7)
 plt.plot(steps, random1_accuracy, 'b-.', linewidth=3.7)
 plt.plot(steps, predict_accuracy, 'g', linewidth=4.0)
-# plt.plot(steps, uniform_accuracy, 'y:', linewidth=4)
+plt.plot(steps, uniform_accuracy, 'y:', linewidth=4)
 plt.ylim(-0.1, 1.1)
 plt.xticks(steps, fontsize=20)
 plt.yticks(fontsize=20)
 plt.xlabel("Time step", fontsize=20)
 plt.ylabel("Accuracy", fontsize=20)
 plt.gcf().subplots_adjust(bottom=0.15)
-plt.legend(["random action", "random weights", "proposed"], loc=4, fontsize=20)
+plt.legend(["random action", "random weights", "proposed", "actual"], loc=4, fontsize=20)
 # plt.show()
-plt.savefig("figures/results11.jpg", bbox_inches='tight')
+plt.savefig("figures/results6_hr.png", bbox_inches='tight')
 
 # plt.figure()
 # Y = list(predict_scores[:, 0]) + uniform_users
