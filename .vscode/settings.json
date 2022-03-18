@@ -1,5 +1,5 @@
 {
-    "python.linting.pep8Args": [
+    "python.linting.pycodestyleArgs": [
         "--max-line-length=105",
         "--ignore=E731,E741",
     ]
