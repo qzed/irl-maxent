@@ -8,15 +8,15 @@ You may also want to have a look at the accompanying [presentation][presentation
 For an example demonstrating how the Maximum (non-causal) Entropy IRL algorithm works, see the corresponding Jupyter notebook ([`notebooks/maxent.ipynb`][nb-viewer]).
 Note that the provided python files (`src/`) contain a slightly more optimized implementation of the algorithms.
 
-To run a demonstration without the notebook, you can directly run `src/main.py`.
+To run a demonstration without the notebook, you can directly run `./src/example.py`.
 Also have a look at this file on how to use the provided framework.
 The framework contains:
-- Two GridWorld implementations for demonstration (`src/gridworld.py`)
-- The algorithm implementations (`src/maxent.py`)
-- A gradient based optimizer framework (`src/optimizer.py`)
-- Plotting helper functions (`src/plot.py`)
+- Two GridWorld implementations for demonstration (`irl_maxent.gridworld`)
+- The algorithm implementations (`irl_maxent.maxent`)
+- A gradient based optimizer framework (`irl_maxent.optimizer`)
+- Plotting helper functions (`irl_maxent.plot`)
 - A MDP solver framework, i.e. value iteration and corresponding utilities (`src/solver.py`)
-- A trajectory/trajectory generation framework (`src/trajectory.py`)
+- A trajectory/trajectory generation framework (`irl_maxent.trajectory`)
 
 This project solely relies on the following dependencies: `numpy`, `matplotlib`, `itertools`, and `pytest`.
 

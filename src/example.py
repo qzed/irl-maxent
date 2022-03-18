@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-import gridworld as W
-import maxent as M
-import plot as P
-import trajectory as T
-import solver as S
-import optimizer as O
+from irl_maxent import gridworld as W
+from irl_maxent import maxent as M
+from irl_maxent import plot as P
+from irl_maxent import trajectory as T
+from irl_maxent import solver as S
+from irl_maxent import optimizer as O
 
 import numpy as np
 import matplotlib.pyplot as plt

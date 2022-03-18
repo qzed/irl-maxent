@@ -5,7 +5,7 @@ Tests for gridworld.
 import pytest
 from itertools import product
 
-import gridworld
+from . import gridworld
 
 
 def check_zero_probability(world, sf, st, a):
