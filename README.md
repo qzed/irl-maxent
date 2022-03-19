@@ -16,7 +16,7 @@ The framework contains:
 - The algorithm implementations (`irl_maxent.maxent`)
 - A gradient based optimizer framework (`irl_maxent.optimizer`)
 - Plotting helper functions (`irl_maxent.plot`)
-- A MDP solver framework, i.e. value iteration and corresponding utilities (`src/solver.py`)
+- A MDP solver framework, i.e. value iteration and corresponding utilities (`irl_maxent.solver`)
 - A trajectory/trajectory generation framework (`irl_maxent.trajectory`)
 
 This project solely relies on the following dependencies: `numpy`, `matplotlib`, `itertools`, and `pytest`.
