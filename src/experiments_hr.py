@@ -67,6 +67,9 @@ run_random_baseline = False
 rank_features = False
 scale_weights = False
 
+new_feature = True
+
+all_decision_pts = []
 predict_scores, random_scores = [], []
 for user_id in [1, 2, 3, 11, 12, 13]:
 
@@ -119,8 +122,9 @@ for user_id in [1, 2, 3, 11, 12, 13]:
     complex_abstract_features /= np.linalg.norm(complex_abstract_features, axis=0)
 
     # score for predicting the action based on transferred rewards based on abstract features
-    load_path = data_path + "learned_models/q_values_" + user_id + ".p"
-    qf_transfer = pickle.load(open(load_path, "rb"))
+    qf_transfer = pickle.load(open(data_path + "learned_models/q_values_" + user_id + ".p", "rb"))
+    learned_weights = pickle.load(open(data_path + "learned_models/weights_" + user_id + ".p", "rb"))
+
     # complex_rewards_abstract, complex_weights_abstract = maxent_irl(X, complex_abstract_features,
     #                                                                 complex_trajectories, optim, init)
     # # transfer rewards to complex task
@@ -130,10 +134,21 @@ for user_id in [1, 2, 3, 11, 12, 13]:
     # qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract, X.terminal_idx)
 
     # predict
-    predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, [complex_demo], X.transition,
-                                                         sensitivity=0.0, consider_options=False)
-    predict_scores.append(predict_score)
+    if new_feature:
+        min_weight = min(learned_weights)
+        new_complex_features = np.array([X.get_features(state, new_feature=new_feature) for state in X.states])
+        new_complex_features /= np.linalg.norm(new_complex_features, axis=0)
+        transfer_rewards = new_complex_features.dot(np.append(learned_weights, min_weight))
+        qf_new, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards, X.terminal_idx)
+    else:
+        qf_new = None
 
+    predict_sequence, predict_score, decision_pts = predict_trajectory(qf_transfer, X.states,
+                                                                       [complex_demo], X.transition,
+                                                                       sensitivity=0.0, consider_options=False,
+                                                                       qf_unknown=qf_new)
+    predict_scores.append(predict_score)
+    all_decision_pts.append(decision_pts)
     # ----------------------------------------- Testing: Random baselines ------------------------------------------- #
     if run_random_baseline:
         random_score = []
@@ -153,6 +168,7 @@ for user_id in [1, 2, 3, 11, 12, 13]:
         random_score = np.mean(random_score, axis=0)
         random_scores.append(random_score)
 
-np.savetxt(os.path.dirname(__file__) + "/results/study_hr/predict.csv", predict_scores)
-if run_random_baseline:
-    np.savetxt(os.path.dirname(__file__) + "/results/study_hr/random_weights.csv", random_scores)
+np.savetxt(os.path.dirname(__file__) + "/results/study_hr/decide.csv", all_decision_pts)
+# np.savetxt(os.path.dirname(__file__) + "/results/study_hr/predict.csv", predict_scores)
+# if run_random_baseline:
+#     np.savetxt(os.path.dirname(__file__) + "/results/study_hr/random_weights.csv", random_scores)

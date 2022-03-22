@@ -197,15 +197,19 @@ def rollout_trajectory(qf, states, demos, transition_function):
     return generated_sequence
 
 
-def predict_trajectory(qf, states, demos, transition_function, sensitivity=0, consider_options=False):
+def predict_trajectory(qf, states, demos, transition_function, sensitivity=0, consider_options=False, qf_unknown=None):
 
     demo = demos[0]
     s, available_actions = 0, demo.copy()
 
+    action_pts = []
     predictions, scores = [], []
+    decisions = []
     for take_action in demo:
         max_action_val = -np.inf
+        max_action_val_new = -np.inf
         candidates = []
+        candidates_new = []
         applicants = []
         for a in available_actions:
             p, sp = transition_function(states[s], a)
@@ -217,6 +221,14 @@ def predict_trajectory(qf, states, demos, transition_function, sensitivity=0, co
                 elif (1 - sensitivity) * max_action_val <= qf[s][a] <= (1 + sensitivity) * max_action_val:
                     candidates.append(a)
                     max_action_val = qf[s][a]
+
+                if qf_unknown:
+                    if qf_unknown[s][a] > (1 + sensitivity) * max_action_val_new:
+                        candidates_new = [a]
+                        max_action_val_new = qf_unknown[s][a]
+                    elif (1 - sensitivity) * max_action_val_new <= qf_unknown[s][a] <= (1 + sensitivity) * max_action_val_new:
+                        candidates_new.append(a)
+                        max_action_val_new = qf_unknown[s][a]
 
         predictions.append(candidates)
 
@@ -231,6 +243,11 @@ def predict_trajectory(qf, states, demos, transition_function, sensitivity=0, co
         options = list(set(candidates))
         applicants = list(set(applicants))
 
+        if len(applicants) > 1:
+            decisions.append(True)
+        else:
+            decisions.append(False)
+
         if consider_options and (len(options) < len(applicants)):
             score = take_action in options
         else:
@@ -240,11 +257,20 @@ def predict_trajectory(qf, states, demos, transition_function, sensitivity=0, co
             score = np.mean(predict_score)
         scores.append(score)
 
+        if qf_unknown:
+            if candidates_new[0] == candidates[0]:
+                action_pts.append(True)
+            else:
+                action_pts.append(False)
+
         p, sp = transition_function(states[s], take_action)
         s = states.index(sp)
         available_actions.remove(take_action)
 
-    return predictions, scores
+    if qf_unknown:
+        return predictions, scores, action_pts
+    else:
+        return predictions, scores, decisions
 
 
 def random_trajectory(states, demos, transition_function):

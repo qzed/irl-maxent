@@ -59,7 +59,7 @@ class AssemblyTask:
     def set_terminal_idx(self):
         self.terminal_idx = [self.states.index(s_terminal) for s_terminal in self.s_end]
 
-    def get_features(self, state):
+    def get_features(self, state, new_feature=False):
 
         # calculate current phase
         terminal_state = self.s_end[-1]
@@ -79,8 +79,17 @@ class AssemblyTask:
         else:
             c_part, c_tool = 0.0, 0.0
 
-        feature_value = np.array([phase * e_p, phase * e_m, (1.0 - phase) * e_p, (1.0 - phase) * e_m, c_part, c_tool])
-        # feature_value = np.array([(1.0 - phase) * e_p, (1.0 - phase) * e_m, c_part, c_tool])
+        # feature_value = [phase * e_p, phase * e_m, c_part, c_tool]
+        feature_value = [phase * e_p, phase * e_m, (1.0 - phase) * e_p, (1.0 - phase) * e_m, c_part, c_tool]
+        if new_feature:
+            if curr_a == 0 and state[1] == 0:
+                s_part = 1.0
+            elif curr_a == 1 and state[0] == 1:
+                s_part = 1.0
+            else:
+                s_part = 0.0
+            feature_value += [s_part]
+        feature_value = np.array(feature_value)
 
         # n_actions, n_features = np.array(action_features).shape
         # feature_value = np.zeros(n_features)

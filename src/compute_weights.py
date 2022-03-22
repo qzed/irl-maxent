@@ -139,13 +139,14 @@ transfer_rewards_abstract = complex_abstract_features.dot(canonical_weights_abst
 qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract, X.terminal_idx)
 
 # score for predicting the action based on transferred rewards based on abstract features
-predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, [complex_demo], X.transition,
-                                                             sensitivity=0.0, consider_options=False)
+# predict_sequence, predict_score = predict_trajectory(qf_transfer, X.states, [complex_demo], X.transition,
+#                                                              sensitivity=0.0, consider_options=False)
 
 print("canonical : ", canonical_demo)
 print("preference: ", complex_demo)
-print("prediction: ", predict_sequence)
-# save_path = data_path + "learned_models/"
+# print("prediction: ", predict_sequence)
+save_path = data_path + "learned_models/"
+pickle.dump(canonical_weights_abstract, open(save_path + "weights_" + user_id + ".p", "wb"))
 # pickle.dump(qf_transfer, open(save_path + "q_values_" + user_id + ".p", "wb"))
 # pickle.dump(X.states, open(save_path + "states_" + user_id + ".p", "wb"))
 # print("Q-values have been saved for user " + user_id + ".")
