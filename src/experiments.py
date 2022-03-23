@@ -106,7 +106,7 @@ for i in range(len(canonical_demos)):
 
         # using abstract features
         abstract_features = np.array([C.get_features(state) for state in C.states])
-        norm_abstract_features = abstract_features / np.sum(abstract_features, axis=0)
+        norm_abstract_features = abstract_features / np.linalg.norm(abstract_features, axis=0)
         canonical_rewards_abstract, canonical_weights_abstract = maxent_irl(C, norm_abstract_features,
                                                                             canonical_trajectories,
                                                                             optim, init)
@@ -117,22 +117,17 @@ for i in range(len(canonical_demos)):
 
     # --------------------------------------- Verifying: Reproduce demo --------------------------------------------- #
 
-    # canonical_rewards_true = norm_abstract_features.dot(np.array([1., 0., 0., 0., 1., 0.]))
-    # qf_true, _, _ = value_iteration(C.states, C.actions, C.transition, canonical_rewards_true, C.terminal_idx)
-    # generated_sequence_true = rollout_trajectory(qf_true, C.states, canonical_user_demo, C.transition)
-    #
     # qf_abstract, _, _ = value_iteration(C.states, C.actions, C.transition, canonical_rewards_abstract, C.terminal_idx)
     # predict_sequence_canonical, _ = predict_trajectory(qf_abstract, C.states, canonical_user_demo, C.transition)
     #
     # print("\n")
     # print("Canonical task:")
     # print("     demonstration -", canonical_user_demo)
-    # print("  generated (true) -", generated_sequence_true)
     # print("predict (abstract) -", predict_sequence_canonical)
 
     # ----------------------------------------- Testing: Predict complex -------------------------------------------- #
 
-    # initialize complex task
+    # initialize actual task
     X = ComplexTask(complex_features[i])
     X.set_end_state(complex_demos[i])
     X.enumerate_states()
@@ -146,7 +141,7 @@ for i in range(len(canonical_demos)):
 
     # using abstract features
     complex_abstract_features = np.array([X.get_features(state) for state in X.states])
-    complex_abstract_features /= np.sum(complex_abstract_features, axis=0)
+    complex_abstract_features /= np.linalg.norm(complex_abstract_features, axis=0)
 
     if run_proposed:
         # transfer rewards to complex task
@@ -155,10 +150,10 @@ for i in range(len(canonical_demos)):
         # score for predicting the action based on transferred rewards based on abstract features
         qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, transfer_rewards_abstract,
                                             X.terminal_idx)
-        predict_sequence, predict_score, decisions = predict_trajectory(qf_transfer, X.states, complex_user_demo,
-                                                                        X.transition,
-                                                                        sensitivity=0.0,
-                                                                        consider_options=False)
+        predict_sequence, predict_score, decisions = actively_predict_trajectory(X, optim, init,
+                                                                                 qf_transfer, complex_user_demo,
+                                                                                 sensitivity=0.0,
+                                                                                 consider_options=False)
         predict_scores.append(predict_score)
         # decision_pts.append(decisions)
 
@@ -186,9 +181,12 @@ for i in range(len(canonical_demos)):
             random_weights = np.random.rand(6)  # np.random.shuffle(canonical_weights_abstract)
             random_rewards_abstract = complex_abstract_features.dot(random_weights)
             qf_random, _, _ = value_iteration(X.states, X.actions, X.transition, random_rewards_abstract, X.terminal_idx)
-            predict_sequence, r_score, _ = predict_trajectory(qf_random, X.states, complex_user_demo, X.transition,
-                                                              sensitivity=0.0, consider_options=False)
-
+            # predict_sequence, r_score, _ = predict_trajectory(qf_random, X.states, complex_user_demo, X.transition,
+            #                                                   sensitivity=0.0, consider_options=False)
+            predict_sequence, r_score, _ = actively_predict_trajectory(X, optim, init,
+                                                                       qf_random, complex_user_demo,
+                                                                       sensitivity=0.0,
+                                                                       consider_options=False)
             # score for randomly selecting an action
             # predict_sequence, r_score = random_trajectory(X.states, complex_user_demo, X.transition)
 
@@ -206,7 +204,9 @@ for i in range(len(canonical_demos)):
 if run_proposed:
     # np.savetxt("results/decide19.csv", decision_pts)
     np.savetxt("results/weights19_normalized_features.csv", weights)
-    np.savetxt("results/predict19_normalized_features_test_sum.csv", predict_scores)
+    np.savetxt("results/predict19_normalized_features_active.csv", predict_scores)
 
 if run_random_baseline:
-    np.savetxt("results/random19_normalized_features_random_test.csv", random_scores)
+    np.savetxt("results/random19_normalized_features_active.csv", random_scores)
+
+print("Done.")

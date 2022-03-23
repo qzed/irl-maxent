@@ -48,7 +48,7 @@ df = pd.DataFrame(df_dict)
 file_path = dir_path + '/results/'
 predict_scores = np.loadtxt(file_path + "predict19_normalized_features.csv")
 random1_scores = np.loadtxt(file_path + "predict19_normalized_features_test_sum.csv")
-random2_scores = np.loadtxt(file_path + "random19_normalized_features_random_test.csv")
+random2_scores = np.loadtxt(file_path + "predict19_normalized_features_active.csv")
 decision_pts = np.loadtxt(file_path + "decide19.csv")
 
 n_users, n_steps = np.shape(predict_scores)

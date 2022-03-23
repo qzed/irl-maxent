@@ -1,5 +1,6 @@
 import numpy as np
 from vi import value_iteration
+from copy import deepcopy
 
 
 def get_reward(state, curr_action, omega, s_feature, task):
@@ -169,9 +170,9 @@ def maxent_irl(task, s_features, trajectories, optim, init, eps=1e-3):
     return s_features.dot(omega), omega
 
 
-def rollout_trajectory(qf, states, demos, transition_function):
+def rollout_trajectory(qf, states, transition_function, available_actions, start_state=0):
 
-    s, available_actions = 0, demos[0].copy()
+    s = start_state
     generated_sequence = []
     while len(available_actions) > 0:
         max_action_val = -np.inf
@@ -266,6 +267,106 @@ def predict_trajectory(qf, states, demos, transition_function, sensitivity=0, co
         p, sp = transition_function(states[s], take_action)
         s = states.index(sp)
         available_actions.remove(take_action)
+
+    if qf_unknown:
+        return predictions, scores, action_pts
+    else:
+        return predictions, scores, decisions
+
+
+def actively_predict_trajectory(X, optim, init, qf, demos,
+                                sensitivity=0, consider_options=False, qf_unknown=None):
+
+    transition_function = X.transition
+    states = X.states
+    demo = demos[0]
+    s, available_actions = 0, demo.copy()
+
+    action_pts = []
+    predictions, scores = [], []
+    decisions = []
+    for step, take_action in enumerate(demo):
+        max_action_val = -np.inf
+        max_action_val_new = -np.inf
+        candidates = []
+        candidates_new = []
+        applicants = []
+        for a in available_actions:
+            p, sp = transition_function(states[s], a)
+            if sp:
+                applicants.append(a)
+                if qf[s][a] > (1 + sensitivity) * max_action_val:
+                    candidates = [a]
+                    max_action_val = qf[s][a]
+                elif (1 - sensitivity) * max_action_val <= qf[s][a] <= (1 + sensitivity) * max_action_val:
+                    candidates.append(a)
+                    max_action_val = qf[s][a]
+
+                if qf_unknown:
+                    if qf_unknown[s][a] > (1 + sensitivity) * max_action_val_new:
+                        candidates_new = [a]
+                        max_action_val_new = qf_unknown[s][a]
+                    elif (1 - sensitivity) * max_action_val_new <= qf_unknown[s][a] <= (1 + sensitivity) * max_action_val_new:
+                        candidates_new.append(a)
+                        max_action_val_new = qf_unknown[s][a]
+
+        predictions.append(candidates)
+
+        if len(candidates) > 1:
+            predict_iters = 100
+        elif len(candidates) == 1:
+            predict_iters = 1
+        else:
+            print("Error: No candidate actions to pick from.")
+
+        predict_score = []
+        options = list(set(candidates))
+        applicants = list(set(applicants))
+
+        if len(applicants) > 1:
+            decisions.append(True)
+        else:
+            decisions.append(False)
+
+        if consider_options and (len(options) < len(applicants)):
+            score = take_action in options
+        elif len(options) > 0:
+            for _ in range(predict_iters):
+                predict_action = np.random.choice(options)
+                predict_score.append(predict_action == take_action)
+            score = np.mean(predict_score)
+        else:
+            score = 0
+        scores.append(score)
+
+        if qf_unknown:
+            if candidates_new[0] == candidates[0]:
+                action_pts.append(True)
+            else:
+                action_pts.append(False)
+
+        p, sp = transition_function(states[s], take_action)
+        s = states.index(sp)
+        available_actions.remove(take_action)
+
+        if score < 0.8:
+            future_actions = deepcopy(available_actions)
+            ro = rollout_trajectory(qf, states, transition_function, future_actions, s)
+            complex_user_demo = [demo[:step+1] + ro]
+            complex_trajectories = get_trajectories(states, complex_user_demo, transition_function)
+
+            print("Training ...")
+
+            # using abstract features
+            abstract_features = np.array([X.get_features(state) for state in X.states])
+            norm_abstract_features = abstract_features / np.linalg.norm(abstract_features, axis=0)
+            complex_rewards_abstract, complex_weights_abstract = maxent_irl(X, norm_abstract_features,
+                                                                            complex_trajectories,
+                                                                            optim, init)
+
+            qf_transfer, _, _ = value_iteration(X.states, X.actions, X.transition, complex_rewards_abstract,
+                                                X.terminal_idx)
+            qf = qf_transfer
 
     if qf_unknown:
         return predictions, scores, action_pts
