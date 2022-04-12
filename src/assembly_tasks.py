@@ -56,6 +56,26 @@ class AssemblyTask:
             prev_states = next_states
             self.states += prev_states
 
+    def enumerate_trajectories(self, demos):
+
+        n_demos, n_steps = np.shape(demos)
+        all_traj = [[(-1, -1, 0)]]
+        for t in range(n_steps):
+            all_traj_new = []
+            for traj in all_traj:
+                prev_state = traj[-1][2]
+                for action in self.actions:
+                    p, next_state = self.transition(self.states[prev_state], action)
+                    if next_state:
+                        new_traj = deepcopy(traj)
+                        new_traj.append((prev_state, action, self.states.index(next_state)))
+                        all_traj_new.append(new_traj)
+
+            all_traj = deepcopy(all_traj_new)
+        all_traj = np.array(all_traj)
+
+        return all_traj[:, 1:, :]
+
     def set_terminal_idx(self):
         self.terminal_idx = [self.states.index(s_terminal) for s_terminal in self.s_end]
 

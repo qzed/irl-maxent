@@ -5,6 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 
+
 # plotting style
 sns.set(style="darkgrid", context="talk")
 
@@ -45,10 +46,10 @@ df = pd.DataFrame(df_dict)
 # plt.savefig("figures/canonical_mental_ratings.png", bbox_inches='tight')
 # plt.show()
 
-file_path = dir_path + '/results/'
-predict_scores = np.loadtxt(file_path + "predict19_normalized_features.csv")
-random1_scores = np.loadtxt(file_path + "predict19_normalized_features_test_sum.csv")
-random2_scores = np.loadtxt(file_path + "predict19_normalized_features_active.csv")
+file_path = dir_path + "\\results\\"
+predict_scores = np.loadtxt(file_path + "toy\\predict19_normalized_features_bayesian.csv")
+random1_scores = np.loadtxt(file_path + "toy\\random19_normalized_features_bayesian.csv")
+random2_scores = np.loadtxt(file_path + "toy\\predict19_normalized_features_bayesian_online.csv")
 decision_pts = np.loadtxt(file_path + "decide19.csv")
 
 n_users, n_steps = np.shape(predict_scores)
@@ -101,27 +102,28 @@ steps = list(range(len(predict_accuracy)))
 plt.figure(figsize=(9, 5))
 
 X, Y1, Y2 = [], [], []
-for i in range(n_users):
-    X += steps
-    Y1 += list(predict_scores[i, :])
-    Y2 += list(random2_scores[i, :])
-df1 = pd.DataFrame({"Time step": X, "Accuracy": Y1})
-df2 = pd.DataFrame({"Time step": X, "Accuracy": Y2})
+# for i in range(n_users):
+#     X += steps
+#     Y1 += list(predict_scores[i, :])
+#     Y2 += list(random2_scores[i, :])
+# df1 = pd.DataFrame({"Time step": X, "Accuracy": Y1})
+# df2 = pd.DataFrame({"Time step": X, "Accuracy": Y2})
 # sns.lineplot(data=df2, x="Time step", y="Accuracy", color="r", linestyle="--", alpha=0.9)
 # sns.lineplot(data=df1, x="Time step", y="Accuracy", color="g", linewidth=4, alpha=0.9)
 plt.plot(steps, random2_accuracy, 'r--', linewidth=4.5, alpha=0.95)
 plt.plot(steps, random1_accuracy, 'b-.', linewidth=4.5, alpha=0.95)
 plt.plot(steps, predict_accuracy, 'g', linewidth=5.0, alpha=0.95)
-plt.xlim(-1, 17)
-plt.ylim(0.1, 1.1)
-plt.xticks(steps, fontsize=14)
-plt.yticks(fontsize=14)
-plt.xlabel("Time step", fontsize=16)
-plt.ylabel("Accuracy", fontsize=16)
-plt.gcf().subplots_adjust(bottom=0.15)
-# plt.legend(["random action", "proposed"], loc=4, fontsize=16)
+plt.xlim(-1, 10)
+plt.ylim(-0.1, 1.1)
+plt.xticks(steps, fontsize=20)
+plt.yticks(fontsize=20)
+plt.xlabel("Time step", fontsize=24)
+plt.ylabel("Accuracy", fontsize=24)
+plt.title("Bayesian IRL", fontsize=24)
+plt.gcf().subplots_adjust(bottom=0.175)
+plt.legend(["online", "random weights", "transferred reward"], loc=4, fontsize=24)
 plt.show()
-# plt.savefig("figures/results19_ci.png", bbox_inches='tight')
+# plt.savefig("figures/results19_bayesian-irl.png", bbox_inches='tight')
 
 # plt.figure()
 # Y = list(predict_scores[:, 0]) + uniform_users

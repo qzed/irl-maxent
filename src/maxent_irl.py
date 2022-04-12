@@ -170,9 +170,10 @@ def maxent_irl(task, s_features, trajectories, optim, init, eps=1e-3):
     return s_features.dot(omega), omega
 
 
-def rollout_trajectory(qf, states, transition_function, available_actions, start_state=0):
+def rollout_trajectory(qf, states, transition_function, remaining_actions, start_state=0):
 
     s = start_state
+    available_actions = deepcopy(remaining_actions)
     generated_sequence = []
     while len(available_actions) > 0:
         max_action_val = -np.inf
@@ -264,6 +265,138 @@ def predict_trajectory(qf, states, demos, transition_function, sensitivity=0, co
             else:
                 action_pts.append(False)
 
+        p, sp = transition_function(states[s], take_action)
+        s = states.index(sp)
+        available_actions.remove(take_action)
+
+    if qf_unknown:
+        return predictions, scores, action_pts
+    else:
+        return predictions, scores, decisions
+
+
+def online_predict_trajectory(X, demos, all_traj, weights, features, samples, priors,
+                              sensitivity=0, consider_options=False, qf_unknown=None):
+
+    transition_function = X.transition
+    states = X.states
+
+    demo = demos[0]
+    s, available_actions = 0, demo.copy()
+
+    action_pts = []
+    predictions, scores = [], []
+    decisions = []
+    for step, take_action in enumerate(demo):
+        rewards = features.dot(weights)
+        qf, _, _ = value_iteration(X.states, X.actions, X.transition, rewards, X.terminal_idx)
+
+        max_action_val = -np.inf
+        max_action_val_new = -np.inf
+        candidates = []
+        candidates_new = []
+        applicants = []
+        for a in available_actions:
+            p, sp = transition_function(states[s], a)
+            if sp:
+                applicants.append(a)
+                if qf[s][a] > (1 + sensitivity) * max_action_val:
+                    candidates = [a]
+                    max_action_val = qf[s][a]
+                elif (1 - sensitivity) * max_action_val <= qf[s][a] <= (1 + sensitivity) * max_action_val:
+                    candidates.append(a)
+                    max_action_val = qf[s][a]
+
+                if qf_unknown:
+                    if qf_unknown[s][a] > (1 + sensitivity) * max_action_val_new:
+                        candidates_new = [a]
+                        max_action_val_new = qf_unknown[s][a]
+                    elif (1 - sensitivity) * max_action_val_new <= qf_unknown[s][a] <= (1 + sensitivity) * max_action_val_new:
+                        candidates_new.append(a)
+                        max_action_val_new = qf_unknown[s][a]
+
+        predictions.append(candidates)
+
+        if len(candidates) > 1:
+            predict_iters = 10
+        elif len(candidates) == 1:
+            predict_iters = 1
+        else:
+            print("Error: No candidate actions to pick from.")
+
+        predict_score = []
+        options = list(set(candidates))
+        applicants = list(set(applicants))
+
+        if len(applicants) > 1:
+            decisions.append(True)
+        else:
+            decisions.append(False)
+
+        if consider_options and (len(options) < len(applicants)):
+            score = take_action in options
+        else:
+            for _ in range(predict_iters):
+                predict_action = np.random.choice(options)
+                predict_score.append(predict_action == take_action)
+            score = np.mean(predict_score)
+        scores.append(score)
+
+        if qf_unknown:
+            if candidates_new[0] == candidates[0]:
+                action_pts.append(True)
+            else:
+                action_pts.append(False)
+
+        future_actions = deepcopy(available_actions)
+        if score < 0.5:
+            prev_weights = deepcopy(weights)
+            p, sp = transition_function(states[s], take_action)
+            future_actions.remove(take_action)
+            ro = rollout_trajectory(qf, states, transition_function, future_actions, states.index(sp))
+            future_actions.append(take_action)
+            complex_user_demo = [demo[:step] + [take_action] + ro]
+            complex_trajectories = get_trajectories(states, complex_user_demo, transition_function)
+
+            all_complex_trajectories = all_traj
+            # for applicant in applicants:
+            #     p, sp = transition_function(states[s], applicant)
+            #     future_actions.remove(applicant)
+            #     ro = rollout_trajectory(qf, states, transition_function, future_actions, states.index(sp))
+            #     future_actions.append(applicant)
+            #     complex_user_demo = [demo[:step] + [applicant] + ro]
+            #     all_complex_trajectories = all_complex_trajectories + \
+            #                                get_trajectories(states, complex_user_demo, transition_function)
+
+            n_samples = 100
+            new_samples = []
+            posterior = []
+            max_likelihood = - np.inf
+            for _ in range(n_samples):
+                # weight_idx = np.random.choice(range(len(samples)), size=1, p=priors)[0]
+                # complex_weights = samples[weight_idx]
+                u = np.random.uniform(0., 1., 3)
+                d = np.sum(u)  # np.sum(u ** 2) ** 0.5
+                complex_weights = u / d
+                likelihood_all_trajectories, _ = boltzman_likelihood(features, all_complex_trajectories, complex_weights)
+                likelihood_user_demo, r = boltzman_likelihood(features, complex_trajectories, complex_weights)
+                likelihood_user_demo = likelihood_user_demo / np.sum(likelihood_all_trajectories)
+
+                new_samples.append(complex_weights)
+                posterior.append(likelihood_user_demo[0])
+
+                if likelihood_user_demo > max_likelihood:
+                    max_likelihood = likelihood_user_demo
+                    weights = complex_weights
+                    max_reward = r
+
+            posterior = posterior / np.sum(posterior)
+            samples = deepcopy(new_samples)
+            priors = deepcopy(posterior)
+
+            print("Updated weights from", prev_weights, "to", weights)
+
+        priors = priors / np.sum(priors)
         p, sp = transition_function(states[s], take_action)
         s = states.index(sp)
         available_actions.remove(take_action)
@@ -407,3 +540,18 @@ def random_trajectory(states, demos, transition_function):
         available_actions.remove(take_action)
 
     return generated_sequence, score
+
+
+def boltzman_likelihood(state_features, trajectories, weights, rationality=0.99):
+    n_states, n_features = np.shape(state_features)
+    likelihood, rewards = [], []
+    for traj in trajectories:
+        feature_count = np.zeros(n_features)
+        for t in traj:
+            feature_count += state_features[t[2]]
+        total_reward = rationality * weights.dot(feature_count)
+        rewards.append(total_reward)
+        likelihood.append(np.exp(total_reward))
+
+    return likelihood, rewards
+

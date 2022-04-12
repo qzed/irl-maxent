@@ -1,202 +1,215 @@
 import numpy as np
-from itertools import product               # Cartesian product for iterators
-import optimizer as O                       # stochastic gradient descent optimizer
-
-# ------------------------------------------------ Canonical Task ---------------------------------------------------- #
-
-actions = [0,  # screw at location A
-           1,  # weld at location A
-           2]  # hammer at location A
-
-# # s = [screwed, welded, hammered, previous screw, previous weld, previous hammer]
-# features = [[0, 0, 0, 0, 0, 0],  # nothing done, no previous tool
-#             [1, 0, 0, 1, 0, 0],  # screwed, previous tool was screw
-#             [0, 1, 0, 0, 1, 0],  # welded, previous tool was weld
-#             [0, 0, 1, 0, 0, 1],
-#             [1, 1, 0, 1, 0, 0],
-#             [1, 1, 0, 0, 1, 0],
-#             [1, 0, 1, 1, 0, 0],
-#             [1, 0, 1, 0, 0, 1],
-#             [0, 1, 1, 0, 1, 0],
-#             [0, 1, 1, 0, 0, 1],
-#             [1, 1, 1, 1, 0, 0],
-#             [1, 1, 1, 0, 1, 0],
-#             [1, 1, 1, 0, 0, 1]]
-#
-# terminal = [10, 11, 12]
-#
-# trajectories = [[(0, 0, 1), (1, 1, 5), (5, 2, 12)]]
+from copy import deepcopy
 
 
-features = [[0, 0, 0],  # nothing done, no previous tool
-            [1, 0, 0],  # screwed, previous tool was screw
-            [0, 1, 0],  # welded, previous tool was weld
-            [0, 0, 1],
-            [1, 1, 0],
-            [1, 0, 1],
-            [0, 1, 1],
-            [1, 1, 1]]
+class AssemblyTask:
 
-terminal = [7]
+    def __init__(self, features):
 
-trajectories = [[(0, 0, 1), (1, 1, 4), (4, 2, 7)]]
+        self.num_actions, self.num_features = np.shape(features)
+        self.actions = np.array(range(self.num_actions))
+        self.features = np.array(features)
 
+        self.min_value, self.max_value = 0., 1.0
 
-def p_transition(s_from, s_to, a):
-    f_from = list(features[s_from])
-    f_from[a] = 1
-    # f_from[3:] = [0, 0, 0]
-    # f_from[3 + a] = 1
-    f_to = list(features[s_to])
-    if f_from == f_to:
-        return 1.0
-    else:
-        return 0.0
+        # start state of the assembly task (none of the actions have been performed)
+        self.s_start = [0] * self.num_actions
+        self.s_end = []
 
+        self.states = [self.s_start]
+        self.terminal_idx = []
 
-def feature_expectation_from_trajectories(features, trajectories):
-    n_states, n_features = features.shape
+    def scale_features(self):
+        self.features = (np.array(self.features) - self.min_value) / (self.max_value - self.min_value)
 
-    fe = np.zeros(n_features)
+    def convert_to_rankings(self):
+        nominal_features = self.features
+        for feature_idx in range(self.num_features):
+            feature_values = self.features[:, feature_idx]
+            sorted_values = [x for x, _, _ in sorted(zip(self.actions, feature_values, nominal_features)
+                                                     , key=lambda y: (y[1], y[2]))]
+            feature_ranks = np.array(sorted_values).argsort() + 1
+            self.features[:, feature_idx] = feature_ranks
 
-    for t in trajectories:                  # for each trajectory
-        for s, a, sp in t:                  # for each state in trajectory
-            fe += features[s, :]            # sum-up features
-        fe += features[sp, :]
+    def set_end_state(self, user_demo):
+        self.s_end.append(list(np.bincount(user_demo)))
 
-    return fe / len(trajectories)           # average over trajectories
+    def enumerate_states(self):
+        prev_states = self.states.copy()
+        while prev_states:
+            next_states = []
+            for state in prev_states:
+                for action in self.actions:
+                    p, next_state = self.transition(state, action)
+                    if next_state and (next_state not in next_states) and (next_state not in self.states):
+                        next_states.append(next_state)
 
+            prev_states = next_states
+            self.states += prev_states
 
-def initial_probabilities_from_trajectories(n_states, trajectories):
-    p = np.zeros(n_states)
+    def enumerate_trajectories(self, demos):
 
-    for t in trajectories:                  # for each trajectory
-        p[t[0][0]] += 1.0                   # increment starting state
+        n_demos, n_steps = np.shape(demos)
+        all_traj = [[(-1, -1, 0)]]
+        for t in range(n_steps):
+            all_traj_new = []
+            for traj in all_traj:
+                prev_state = traj[-1][2]
+                for action in self.actions:
+                    p, next_state = self.transition(self.states[prev_state], action)
+                    if next_state:
+                        new_traj = deepcopy(traj)
+                        new_traj.append((prev_state, action, self.states.index(next_state)))
+                        all_traj_new.append(new_traj)
 
-    return p / len(trajectories)            # normalize
+            all_traj = deepcopy(all_traj_new)
+        all_traj = np.array(all_traj)
 
+        return all_traj[:, 1:, :]
 
-def compute_expected_svf(n_states, n_actions, p_initial, terminal, reward, eps=1e-5):
-    nonterminal = set(range(n_states)) - set(terminal)  # nonterminal states
+    def set_terminal_idx(self):
+        self.terminal_idx = [self.states.index(s_terminal) for s_terminal in self.s_end]
 
-    # Backward Pass
-    # 1. initialize at terminal states
-    zs = np.zeros(n_states)  # zs: state partition function
-    zs[terminal] = 1.0
+    def get_features(self, state, new_feature=False):
 
-    # 2. perform backward pass
-    for _ in range(2 * n_states):  # longest trajectory: n_states
-        # reset action values to zero
-        za = np.zeros((n_states, n_actions))  # za: action partition function
+        feature_values = [a*self.features[i] for i, a in enumerate(state)]
+        feature_value = np.sum(feature_values, axis=0)
 
-        # for each state-action pair
-        for s_from, a in product(range(n_states), range(n_actions)):
+        return feature_value
 
-            # sum over s_to
-            for s_to in range(n_states):
-                za[s_from, a] += p_transition(s_from, s_to, a) * np.exp(reward[s_from]) * zs[s_to]
+    def prev_states(self, s_to):
+        previous_states = []
 
-        # sum over all actions
-        zs = za.sum(axis=1)
+        curr_a = s_to[-2]
+        if curr_a >= 0:
+            s_from = deepcopy(s_to[:-2])
+            s_from[curr_a] -= 1
+            prev_a = s_to[-1]
 
-    # 3. compute local action probabilities
-    p_action = za / zs[:, None]
+            previous_state = deepcopy(s_from)
+            previous_state.append(prev_a)
+            if prev_a >= 0:
+                hist_s = deepcopy(s_from)
+                hist_s[prev_a] -= 1
+                hist_actions = [a for a, s in enumerate(hist_s) if s >= 1]
+                if hist_actions:
+                    for hist_a in hist_actions:
+                        prob, s = self.back_transition(hist_s, hist_a)
+                        if s:
+                            prev_s = deepcopy(previous_state)
+                            prev_s.append(hist_a)
+                            previous_states.append(prev_s)
+                else:
+                    hist_a = -1
+                    previous_state.append(hist_a)
+                    previous_states.append(previous_state)
+            else:
+                hist_a = -1
+                previous_state.append(hist_a)
+                previous_states.append(previous_state)
 
-    # Forward Pass
-    # 4. initialize with starting probability
-    d = np.zeros((n_states, 2 * n_states))  # d: state-visitation frequencies
-    d[:, 0] = p_initial
-
-    # 5. iterate for N steps
-    for t in range(1, 2 * n_states):  # longest trajectory: n_states
-
-        # for all states
-        for s_to in range(n_states):
-
-            # sum over nonterminal state-action pairs
-            for s_from, a in product(nonterminal, range(n_actions)):
-                d[s_to, t] += d[s_from, t - 1] * p_action[s_from, a] * p_transition(s_from, s_to, a)
-
-    # 6. sum-up frequencies
-    return d.sum(axis=1)
-
-
-def maxent_irl(actions, features, terminal, trajectories, optim, init, eps=1e-4):
-    n_actions = len(actions)
-    n_states, n_features = features.shape
-
-    # compute feature expectation from trajectories
-    e_features = feature_expectation_from_trajectories(features, trajectories)
-
-    # compute starting-state probabilities from trajectories
-    p_initial = initial_probabilities_from_trajectories(n_states, trajectories)
-
-    # gradient descent optimization
-    omega = init(n_features)  # initialize our parameters
-    delta = np.inf  # initialize delta for convergence check
-
-    optim.reset(omega)  # re-start optimizer
-    while delta > eps:  # iterate until convergence
-        omega_old = omega.copy()
-
-        # compute per-state reward from features
-        reward = features.dot(omega)
-
-        # compute gradient of the log-likelihood
-        e_svf = compute_expected_svf(n_states, n_actions, p_initial, terminal, reward)
-        grad = e_features - features.T.dot(e_svf)
-
-        # perform optimization step and compute delta for convergence
-        optim.step(grad)
-
-        # re-compute detla for convergence check
-        delta = np.max(np.abs(omega_old - omega))
-
-    # re-compute per-state reward and return
-    return features.dot(omega), omega
+        return previous_states
 
 
-# set up features: we use one feature vector per state
-features = np.array(features)
+# ----------------------------------------------- Canonical Task ----------------------------------------------------- #
 
-# choose our parameter initialization strategy:
-# initialize parameters with constant
-init = O.Constant(1.0)
+class CanonicalTask(AssemblyTask):
+    """
+    Actions:
 
-# choose our optimization strategy:
-#   we select exponentiated stochastic gradient descent with linear learning-rate decay
-optim = O.ExpSga(lr=O.linear_decay(lr0=0.2))
+    feature values for each action = [physical_effort, mental_effort, movement]
+    """
 
-# actually do some inverse reinforcement learning
-reward_maxent, weights = maxent_irl(actions, features, terminal, trajectories, optim, init)
-print("Canonical Task Done")
+    @staticmethod
+    def transition(s_from, a):
+        # preconditions
+        if s_from[a] < 1:
+            if a in [0, 1, 2]:
+                prob = 1.0
+            elif a in [3, 4, 5] and s_from[a - 3] == 1:
+                prob = 1.0
+            else:
+                prob = 0.0
+        else:
+            prob = 0.0
 
-# -------------------------------------------------- Actual Task ----------------------------------------------------- #
-actions = [0,  # screw at location A
-           1,  # screw at location A
-           2,  # weld at location A
-           3,  # hammer at location A
-           4]  # hammer at location A
+        # transition to next state
+        if prob == 1.0:
+            s_to = deepcopy(s_from)
+            s_to[a] += 1
+            return prob, s_to
+        else:
+            return prob, None
 
-features = [[0, 0, 0],
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-            [2, 0, 0],
-            [1, 1, 0],
-            [1, 0, 1],
-            [0, 1, 1],
-            [0, 0, 2],
-            [2, 1, 0],
-            [2, 0, 1],
-            [1, 1, 1],
-            [1, 0, 2],
-            [0, 1, 2],
-            [2, 1, 1],
-            [2, 0, 2],
-            [1, 1, 2],
-            [2, 1, 2]]
-features = np.array(features)
+    @staticmethod
+    def back_transition(s_to, a):
+        # preconditions
+        if s_to[a] > 0:
+            if a in [0, 1, 2] and s_to[a + 3] < 1:
+                p = 1.0
+            elif a in [3, 4, 5]:
+                p = 1.0
+            else:
+                p = 0.0
+        else:
+            p = 0.0
 
-rewards = features.dot(weights)
-print("Actual Task Done")
+        # transition to next state
+        if p == 1.0:
+            s_from = deepcopy(s_to)
+            s_from[a] -= 1
+            return p, s_from
+        else:
+            return p, None
+
+
+# ------------------------------------------------ Complex Task ----------------------------------------------------- #
+
+class ComplexTask(AssemblyTask):
+    """
+    Actions:
+
+    """
+
+    @staticmethod
+    def transition(s_from, a):
+        # preconditions
+        if s_from[a] < 1:
+            if a in [0, 1, 2, 3, 4]:
+                prob = 1.0
+            elif a in [5, 6, 7, 8, 9] and s_from[a - 5] == 1:
+                prob = 1.0
+            else:
+                prob = 0.0
+        else:
+            prob = 0.0
+
+        # transition to next state
+        if prob == 1.0:
+            s_to = deepcopy(s_from)
+            s_to[a] += 1
+            return prob, s_to
+        else:
+            return prob, None
+
+    @staticmethod
+    def back_transition(s_to, a):
+        # preconditions
+        if s_to[a] > 0:
+            if a in [0, 1, 2, 3, 4] and s_to[a + 5] < 1:
+                p = 1.0
+            elif a in [5, 6, 7, 8, 9]:
+                p = 1.0
+            else:
+                p = 0.0
+        else:
+            p = 0.0
+
+        # transition to next state
+        if p == 1.0:
+            s_from = deepcopy(s_to)
+            s_from[a] -= 1
+            return p, s_from
+        else:
+            return p, None
+
