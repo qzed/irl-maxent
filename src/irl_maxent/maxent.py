@@ -333,7 +333,7 @@ def local_causal_action_probabilities(p_transition, terminal, reward, discount, 
             v = softmax(v, q[:, a])
 
         # for some reason numpy chooses an array of objects after reduction, force floats here
-        v = np.array(v, dtype=np.float)
+        v = np.array(v, dtype=float)
 
         delta = np.max(np.abs(v - v_old))
 
