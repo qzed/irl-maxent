@@ -173,9 +173,11 @@ def stochastic_policy_from_value(world, value, w=lambda x: x):
         describing a probability distribution p(action | state) of selecting
         an action given a state.
     """
-    policy = np.array([
+    value = np.exp(value)       # for softmax
+
+    q = np.array([
         np.array([w(value[world.state_index_transition(s, a)]) for a in range(world.n_actions)])
         for s in range(world.n_states)
     ])
 
-    return policy / np.sum(policy, axis=1)[:, None]
+    return q / np.sum(q, axis=1)[:, None]
