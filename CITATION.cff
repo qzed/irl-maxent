@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+title: Maximum Entropy Inverse Reinforcement Learning - An Implementation
+message: 'If you use this software, please cite it as below.'
+type: software
+authors:
+  - family-names: Luz
+    given-names: Maximilian
+    orcid: 'https://orcid.org/0000-0002-1123-6604'
+    email: m@mxnluz.io
+url: 'https://github.com/qzed/irl-maxent'
+license: MIT
+version: 0.1.0
+date-released: '2019-07-01'
